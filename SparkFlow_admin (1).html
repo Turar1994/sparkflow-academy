@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SparkFlow Admin</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#060D1A;color:#E2E8F0;min-height:100vh}
+.auth{min-height:100vh;display:flex;align-items:center;justify-content:center}
+.box{background:#0A1628;border:1px solid #1E3A5F;border-radius:16px;padding:36px;width:380px}
+.logo{text-align:center;margin-bottom:24px}
+.bolt{width:48px;height:48px;background:#00E5FF;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:8px}
+.brand{font-size:18px;font-weight:700;color:#fff}
+.brand span{color:#00E5FF}
+.badge{font-size:12px;color:#F59E0B;margin-top:4px}
+h2{font-size:16px;font-weight:600;color:#fff;text-align:center;margin-bottom:20px}
+label{font-size:11px;font-weight:600;color:#94A3B8;letter-spacing:.06em;display:block;margin-bottom:5px}
+input{width:100%;background:#0F2040;border:1px solid #1E3A5F;color:#E2E8F0;font-size:14px;padding:11px 14px;border-radius:8px;margin-bottom:14px;outline:none}
+input:focus{border-color:#00BCD4}
+button{width:100%;background:#00E5FF;color:#060D1A;font-size:15px;font-weight:700;padding:13px;border-radius:10px;border:none;cursor:pointer;margin-top:4px}
+button:hover{background:#80DEEA}
+.err{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#FCA5A5;font-size:13px;padding:10px;border-radius:8px;margin-top:10px;display:none;text-align:center}
+.dbg{background:#0F2040;border:1px solid #1E3A5F;color:#94A3B8;font-size:11px;padding:8px;border-radius:6px;margin-top:10px;display:none;font-family:monospace;word-break:break-all}
+
+/* ADMIN PANEL */
+#panel{display:none;min-height:100vh}
+.topbar{background:#0A1628;border-bottom:1px solid #1E3A5F;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between}
+.topbar-logo{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;color:#fff}
+.topbar-logo span{color:#00E5FF}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.out-btn{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#FCA5A5;font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer;width:auto}
+.main{max-width:900px;margin:0 auto;padding:28px 20px}
+.welcome{font-size:22px;font-weight:700;color:#fff;margin-bottom:6px}
+.welcome-sub{font-size:13px;color:#94A3B8;margin-bottom:24px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:28px}
+.card{background:#0A1628;border:1px solid #1E3A5F;border-radius:12px;padding:16px}
+.card-val{font-size:28px;font-weight:700;color:#00E5FF}
+.card-lbl{font-size:12px;color:#94A3B8;margin-top:3px}
+.section{background:#0A1628;border:1px solid #1E3A5F;border-radius:12px;padding:20px;margin-bottom:16px}
+.section-title{font-size:14px;font-weight:600;color:#fff;margin-bottom:14px}
+.form-row{display:flex;gap:10px;flex-wrap:wrap}
+.form-half{flex:1;min-width:160px}
+.fi{width:100%;background:#0F2040;border:1px solid #1E3A5F;color:#E2E8F0;font-size:13px;padding:9px 12px;border-radius:8px;margin-bottom:10px;outline:none}
+.fi:focus{border-color:#00BCD4}
+.btn-add{background:#00E5FF;color:#060D1A;font-size:13px;font-weight:700;padding:9px 18px;border-radius:8px;border:none;cursor:pointer;width:auto}
+.btn-add:hover{background:#80DEEA}
+.table{width:100%;border-collapse:collapse;font-size:13px}
+.table th{background:#0F2040;color:#94A3B8;font-weight:600;padding:9px 12px;text-align:left;border-bottom:1px solid #1E3A5F;font-size:11px}
+.table td{padding:10px 12px;border-bottom:1px solid #1E3A5F;color:#E2E8F0;vertical-align:middle}
+.table tr:last-child td{border-bottom:none}
+.btn-del{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#FCA5A5;font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;width:auto}
+.prog-bar{height:5px;background:#162a4a;border-radius:3px;overflow:hidden;min-width:80px}
+.prog-fill{height:100%;background:#00E5FF;border-radius:3px}
+.toast{position:fixed;bottom:20px;right:20px;background:#22C55E;color:#fff;font-size:13px;font-weight:600;padding:10px 18px;border-radius:10px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
+.toast.show{opacity:1}
+.toast.err-t{background:#EF4444}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- AUTH -->
+<div class="auth" id="authDiv">
+  <div class="box">
+    <div class="logo">
+      <div class="bolt">⚡</div>
+      <div class="brand">Spark<span>Flow</span></div>
+      <div class="badge">⚙ Админ кабинеті</div>
+    </div>
+    <h2>Кіру</h2>
+    <label>ЛОГИН</label>
+    <input type="text" id="aLogin" placeholder="admin" autocomplete="off">
+    <label>ПАРОЛЬ</label>
+    <input type="password" id="aPass" placeholder="Пароль" onkeydown="if(event.key==='Enter')login()">
+    <button onclick="login()">Кіру →</button>
+    <div class="err" id="errMsg"></div>
+    <div class="dbg" id="dbgMsg"></div>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div id="panel">
+  <div class="topbar">
+    <div class="topbar-logo"><span>⚡</span>Spark<span>Flow</span> <span style="color:#F59E0B;font-size:11px;margin-left:6px">АДМИН</span></div>
+    <div class="topbar-right">
+      <a href="index.html" target="_blank" style="color:#94A3B8;font-size:12px;text-decoration:none">Студент сайты →</a>
+      <button class="out-btn" onclick="logout()">Шығу</button>
+    </div>
+  </div>
+  <div class="main">
+    <div class="welcome">Басқару тақтасы</div>
+    <div class="welcome-sub">SparkFlow Academy — студенттерді басқару</div>
+    <div class="cards">
+      <div class="card"><div class="card-val" id="statStudents">0</div><div class="card-lbl">Студент</div></div>
+      <div class="card"><div class="card-val" id="statDone">0</div><div class="card-lbl">Аяқталған сабақтар</div></div>
+      <div class="card"><div class="card-val">20</div><div class="card-lbl">Жалпы сабақ</div></div>
+      <div class="card"><div class="card-val">4</div><div class="card-lbl">Апта</div></div>
+    </div>
+
+    <!-- ADD STUDENT -->
+    <div class="section">
+      <div class="section-title">+ Жаңа студент қосу</div>
+      <div class="form-row">
+        <div class="form-half">
+          <label style="font-size:11px;color:#94A3B8;display:block;margin-bottom:4px">АТЫ-ЖӨНІ</label>
+          <input class="fi" type="text" id="sName" placeholder="Мысалы: Сырым Азиз">
+        </div>
+        <div class="form-half">
+          <label style="font-size:11px;color:#94A3B8;display:block;margin-bottom:4px">ЛОГИН</label>
+          <input class="fi" type="text" id="sLogin" placeholder="syrymaziz">
+        </div>
+        <div class="form-half">
+          <label style="font-size:11px;color:#94A3B8;display:block;margin-bottom:4px">ПАРОЛЬ</label>
+          <input class="fi" type="text" id="sPass" placeholder="Кемінде 6 символ">
+        </div>
+      </div>
+      <button class="btn-add" onclick="addStudent()">+ Студент қосу</button>
+    </div>
+
+    <!-- STUDENTS LIST -->
+    <div class="section">
+      <div class="section-title">Студенттер тізімі</div>
+      <div style="overflow-x:auto">
+        <table class="table">
+          <thead><tr>
+            <th>АТЫ-ЖӨНІ</th><th>ЛОГИН</th><th>ПАРОЛЬ</th><th>ПРОГРЕСС</th><th>ӘРЕКЕТ</th>
+          </tr></thead>
+          <tbody id="studentsTbody">
+            <tr><td colspan="5" style="text-align:center;color:#475569;padding:20px">Жүктелуде...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="section">
+      <div class="section-title">Админ паролін өзгерту</div>
+      <div class="form-row">
+        <div class="form-half">
+          <input class="fi" type="password" id="newPass" placeholder="Жаңа пароль">
+        </div>
+        <div>
+          <button class="btn-add" onclick="changePass()" style="margin-top:0">Сақтау</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Firebase CDN
+const FB_URL = 'https://sparkflow-academy-default-rtdb.firebaseio.com';
+
+function showToast(msg, isErr){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isErr?' err-t':'');
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+function showErr(msg){
+  const e = document.getElementById('errMsg');
+  e.textContent = msg;
+  e.style.display = 'block';
+}
+
+function showDbg(msg){
+  const d = document.getElementById('dbgMsg');
+  d.textContent = msg;
+  d.style.display = 'block';
+}
+
+// Simple REST API calls to Firebase (no SDK needed)
+async function fbGet(path){
+  const r = await fetch(`${FB_URL}${path}.json`);
+  return r.json();
+}
+
+async function fbSet(path, data){
+  const r = await fetch(`${FB_URL}${path}.json`, {
+    method:'PUT', body:JSON.stringify(data),
+    headers:{'Content-Type':'application/json'}
+  });
+  return r.json();
+}
+
+async function fbPush(path, data){
+  const r = await fetch(`${FB_URL}${path}.json`, {
+    method:'POST', body:JSON.stringify(data),
+    headers:{'Content-Type':'application/json'}
+  });
+  return r.json();
+}
+
+async function fbDelete(path){
+  await fetch(`${FB_URL}${path}.json`, {method:'DELETE'});
+}
+
+// LOGIN
+async function login(){
+  const loginVal = document.getElementById('aLogin').value.trim();
+  const passVal = document.getElementById('aPass').value.trim();
+  document.getElementById('errMsg').style.display = 'none';
+  document.getElementById('dbgMsg').style.display = 'none';
+
+  if(!loginVal || !passVal){ showErr('Логин мен пароль енгізіңіз'); return; }
+
+  try {
+    showDbg('Firebase-ке қосылуда...');
+    const creds = await fbGet('/adminCredentials');
+    showDbg('Алынды: ' + JSON.stringify(creds));
+
+    if(!creds){ showErr('Деректер табылмады'); return; }
+    if(loginVal === creds.login && passVal === creds.password){
+      document.getElementById('authDiv').style.display = 'none';
+      document.getElementById('panel').style.display = 'block';
+      loadStudents();
+    } else {
+      showErr('Логин немесе пароль қате');
+      showDbg('Күтілген: ' + creds.login + '/' + creds.password + ' | Енгізілген: ' + loginVal + '/' + passVal);
+    }
+  } catch(e){
+    showErr('Қате: ' + e.message);
+    showDbg('Error: ' + e.toString());
+  }
+}
+
+function logout(){
+  document.getElementById('authDiv').style.display = 'flex';
+  document.getElementById('panel').style.display = 'none';
+  document.getElementById('aPass').value = '';
+}
+
+// STUDENTS
+let studentsData = {};
+
+async function loadStudents(){
+  const data = await fbGet('/students');
+  studentsData = data || {};
+  const progress = await fbGet('/progress') || {};
+  renderStudents(progress);
+  updateStats(progress);
+}
+
+function updateStats(progress){
+  document.getElementById('statStudents').textContent = Object.keys(studentsData).length;
+  let total = 0;
+  Object.values(progress).forEach(p=>{
+    Object.entries(p||{}).forEach(([k,v])=>{ if(!k.includes('_quiz') && v==='done') total++; });
+  });
+  document.getElementById('statDone').textContent = total;
+}
+
+function renderStudents(progress){
+  const tbody = document.getElementById('studentsTbody');
+  const keys = Object.keys(studentsData);
+  if(!keys.length){
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#475569;padding:20px">Студент жоқ — жоғарыдан қосыңыз</td></tr>';
+    return;
+  }
+  tbody.innerHTML = keys.map(uid=>{
+    const s = studentsData[uid];
+    const prog = progress[uid] || {};
+    const done = Object.entries(prog).filter(([k,v])=>!k.includes('_quiz')&&v==='done').length;
+    const pct = Math.round(done/20*100);
+    return `<tr>
+      <td style="font-weight:500;color:#fff">${s.name}</td>
+      <td style="font-family:monospace;color:#00E5FF;font-size:12px">${s.login}</td>
+      <td style="font-family:monospace;font-size:12px;color:#94A3B8">${s.password}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+          <span style="font-size:12px;color:#94A3B8">${done}/20</span>
+        </div>
+      </td>
+      <td><button class="btn-del" onclick="deleteStudent('${uid}')">Жою</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function addStudent(){
+  const name = document.getElementById('sName').value.trim();
+  const login = document.getElementById('sLogin').value.trim();
+  const pass = document.getElementById('sPass').value.trim();
+  if(!name||!login||!pass){ showToast('Барлық өрістерді толтырыңыз',true); return; }
+  if(pass.length<6){ showToast('Пароль кемінде 6 символ',true); return; }
+  const exists = Object.values(studentsData).some(s=>s.login===login);
+  if(exists){ showToast('Бұл логин бар — басқа логин таңдаңыз',true); return; }
+  const result = await fbPush('/students', {
+    name, login, password:pass,
+    createdAt: new Date().toLocaleDateString('kk-KZ')
+  });
+  document.getElementById('sName').value='';
+  document.getElementById('sLogin').value='';
+  document.getElementById('sPass').value='';
+  showToast('✓ ' + name + ' тіркелді');
+  loadStudents();
+}
+
+async function deleteStudent(uid){
+  const s = studentsData[uid];
+  if(!confirm(`«${s.name}» студентін жоясыз ба?`)) return;
+  await fbDelete('/students/'+uid);
+  await fbDelete('/progress/'+uid);
+  showToast('Студент жойылды', true);
+  loadStudents();
+}
+
+async function changePass(){
+  const np = document.getElementById('newPass').value.trim();
+  if(!np||np.length<4){ showToast('Пароль кемінде 4 символ болуы керек',true); return; }
+  await fbSet('/adminCredentials/password', np);
+  showToast('✓ Пароль жаңартылды');
+  document.getElementById('newPass').value='';
+}
+</script>
+</body>
+</html>
