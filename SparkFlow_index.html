@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SparkFlow Academy</title>
+<script>
+const FB_URL = 'https://sparkflow-academy-default-rtdb.firebaseio.com';
+async function fbGet(p){ try{ const r=await fetch(FB_URL+p+'.json'); return r.json(); }catch(e){ return null; } }
+async function fbSet(p,d){ try{ await fetch(FB_URL+p+'.json',{method:'PUT',body:JSON.stringify(d),headers:{'Content-Type':'application/json'}}); }catch(e){} }
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --navy:#060D1A;--navy2:#0A1628;--navy3:#0F2040;--navy4:#162a4a;
+  --cyan:#00E5FF;--cyan2:#00BCD4;--cyan3:#80DEEA;
+  --white:#FFF;--text:#E2E8F0;--textmid:#94A3B8;--textdim:#475569;
+  --border:#1E3A5F;--border2:#0A2540;
+  --green:#22C55E;--amber:#F59E0B;--red:#EF4444;--purple:#A78BFA;
+  --font:'Space Grotesk',system-ui,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--navy);color:var(--text);min-height:100vh}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--navy2)}
+::-webkit-scrollbar-thumb{background:var(--navy4);border-radius:3px}
+input,textarea{font-family:var(--font)}
+.page{display:none}
+.page.active{display:block}
+
+/* AUTH */
+#authPage{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:var(--navy);
+}
+.auth-wrap{
+  background:var(--navy2);border:1px solid var(--border2);border-radius:20px;
+  padding:40px;width:100%;max-width:400px;
+}
+.auth-logo{text-align:center;margin-bottom:28px}
+.auth-bolt{
+  width:52px;height:52px;background:var(--cyan);border-radius:14px;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:26px;margin-bottom:10px;
+}
+.auth-brand{font-size:20px;font-weight:700;color:var(--white)}
+.auth-brand span{color:var(--cyan)}
+.auth-sub{font-size:13px;color:var(--textmid);margin-top:4px}
+.auth-title{font-size:18px;font-weight:600;color:var(--white);margin-bottom:20px;text-align:center}
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;font-weight:600;color:var(--textmid);letter-spacing:.06em;display:block;margin-bottom:6px}
+.form-input{
+  width:100%;background:var(--navy3);border:1px solid var(--border);
+  color:var(--text);font-size:14px;padding:11px 14px;border-radius:9px;
+  transition:border-color .15s;
+}
+.form-input:focus{outline:none;border-color:var(--cyan2)}
+.form-input::placeholder{color:var(--textdim)}
+.btn-primary{
+  width:100%;background:var(--cyan);color:var(--navy);font-family:var(--font);
+  font-size:15px;font-weight:700;padding:13px;border-radius:10px;
+  border:none;cursor:pointer;transition:all .2s;margin-top:6px;
+}
+.btn-primary:hover{background:var(--cyan3)}
+.btn-primary:disabled{background:var(--navy4);color:var(--textdim);cursor:default}
+.auth-error{
+  background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
+  color:#FCA5A5;font-size:13px;padding:10px 12px;border-radius:8px;margin-top:10px;
+  display:none;
+}
+.auth-error.show{display:block}
+
+/* TOPBAR */
+#topbar{
+  position:sticky;top:0;z-index:200;
+  background:rgba(6,13,26,.94);
+  border-bottom:1px solid var(--border2);
+  backdrop-filter:blur(12px);
+  display:flex;align-items:center;height:56px;
+}
+.tb-logo{
+  display:flex;align-items:center;gap:9px;
+  padding:0 20px;border-right:1px solid var(--border2);height:100%;
+  min-width:200px;cursor:pointer;text-decoration:none;
+}
+.tb-bolt{width:28px;height:28px;background:var(--cyan);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.tb-brand{font-size:15px;font-weight:700;color:var(--white)}
+.tb-brand span{color:var(--cyan)}
+.tb-nav{display:flex;align-items:center;gap:2px;padding:0 12px;flex:1}
+.tb-btn{
+  background:none;border:none;color:var(--textmid);font-family:var(--font);
+  font-size:13px;font-weight:500;padding:6px 11px;border-radius:6px;cursor:pointer;transition:all .15s;
+}
+.tb-btn:hover{color:var(--text);background:var(--navy3)}
+.tb-btn.active{color:var(--cyan);background:rgba(0,229,255,.08)}
+.tb-right{display:flex;align-items:center;gap:10px;padding:0 14px;margin-left:auto}
+.tb-prog{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--textmid)}
+.tb-progbar{width:70px;height:3px;background:var(--navy4);border-radius:2px;overflow:hidden}
+.tb-progfill{height:100%;background:var(--cyan);border-radius:2px;transition:width .5s}
+.tb-user{
+  display:flex;align-items:center;gap:7px;background:var(--navy3);
+  border:1px solid var(--border);border-radius:8px;padding:5px 10px;cursor:pointer;
+}
+.tb-avatar{
+  width:24px;height:24px;border-radius:50%;background:var(--cyan);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:var(--navy);
+}
+.tb-username{font-size:12px;font-weight:500;color:var(--text);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tb-logout{
+  background:none;border:none;color:var(--textdim);cursor:pointer;
+  font-size:11px;padding:2px 6px;border-radius:4px;
+}
+.tb-logout:hover{color:var(--red)}
+
+/* HOME */
+.hero{
+  min-height:90vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;padding:80px 24px 60px;position:relative;overflow:hidden;
+}
+.hero-grid{
+  position:absolute;inset:0;
+  background-image:linear-gradient(rgba(0,229,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.04) 1px,transparent 1px);
+  background-size:60px 60px;pointer-events:none;
+}
+.hero-glow{
+  position:absolute;top:15%;left:50%;transform:translateX(-50%);
+  width:600px;height:300px;
+  background:radial-gradient(ellipse,rgba(0,229,255,.1) 0%,transparent 70%);
+  pointer-events:none;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.25);
+  color:var(--cyan);font-size:12px;font-weight:600;
+  padding:5px 14px;border-radius:99px;margin-bottom:20px;position:relative;
+}
+.hdot{width:6px;height:6px;background:var(--cyan);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hero h1{font-size:clamp(32px,6vw,64px);font-weight:700;color:var(--white);line-height:1.1;margin-bottom:14px;position:relative}
+.hero h1 .acc{color:var(--cyan)}
+.hero-sub{font-size:clamp(14px,2.5vw,18px);color:var(--textmid);max-width:520px;line-height:1.65;margin-bottom:36px;position:relative}
+.hero-stats{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;margin-bottom:40px;position:relative}
+.hstat{text-align:center}
+.hstat-n{font-size:28px;font-weight:700;color:var(--cyan)}
+.hstat-l{font-size:11px;color:var(--textmid);margin-top:2px;letter-spacing:.04em}
+.hero-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;position:relative}
+.btn-hero{
+  background:var(--cyan);color:var(--navy);font-family:var(--font);
+  font-size:15px;font-weight:700;padding:13px 26px;border-radius:10px;
+  border:none;cursor:pointer;transition:all .2s;
+}
+.btn-hero:hover{background:var(--cyan3);transform:translateY(-1px)}
+.btn-ghost{
+  background:rgba(255,255,255,.05);color:var(--text);font-family:var(--font);
+  font-size:15px;font-weight:500;padding:13px 26px;border-radius:10px;
+  border:1px solid var(--border);cursor:pointer;transition:all .2s;
+}
+.btn-ghost:hover{background:rgba(255,255,255,.09)}
+.weeks-sec{padding:48px 24px;max-width:1080px;margin:0 auto}
+.sec-head{display:flex;align-items:center;gap:10px;margin-bottom:24px}
+.sec-line{height:1px;flex:1;background:var(--border2)}
+.sec-lbl{font-size:11px;font-weight:600;color:var(--textmid);letter-spacing:.1em;white-space:nowrap}
+.weeks-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.wcard{
+  background:var(--navy2);border:1px solid var(--border2);border-radius:14px;
+  padding:18px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;
+}
+.wcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--wc);opacity:.6;transition:opacity .2s}
+.wcard:hover{border-color:var(--wc,var(--cyan2));transform:translateY(-2px)}
+.wcard:hover::before{opacity:1}
+.wcard.locked{opacity:.5;cursor:not-allowed}
+.wcard.locked:hover{transform:none;border-color:var(--border2)}
+.wc-num{font-size:10px;font-weight:600;letter-spacing:.08em;margin-bottom:8px}
+.wc-title{font-size:15px;font-weight:600;color:var(--white);margin-bottom:4px}
+.wc-sub{font-size:11px;color:var(--textmid);margin-bottom:12px}
+.wc-dots{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:12px}
+.wc-dot{width:9px;height:9px;border-radius:50%;background:var(--navy4);border:1.5px solid var(--border);transition:all .3s}
+.wc-dot.done{border-color:var(--wc)}
+.wc-prog-row{display:flex;justify-content:space-between;font-size:10px;color:var(--textmid);margin-bottom:5px}
+.wc-bar{height:2px;background:var(--navy4);border-radius:1px;overflow:hidden}
+.wc-bar-fill{height:100%;border-radius:1px;transition:width .5s}
+.wc-btn{
+  width:100%;margin-top:10px;background:rgba(255,255,255,.05);
+  border:1px solid var(--border);color:var(--text);font-family:var(--font);
+  font-size:12px;font-weight:500;padding:7px;border-radius:7px;cursor:pointer;transition:all .15s;
+}
+.wcard:not(.locked) .wc-btn:hover{background:rgba(255,255,255,.09)}
+.lock-badge{
+  position:absolute;top:12px;right:12px;
+  background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);
+  color:#FCA5A5;font-size:10px;font-weight:600;padding:3px 8px;border-radius:99px;
+}
+
+/* LESSON LAYOUT */
+.lesson-layout{display:grid;grid-template-columns:250px 1fr;min-height:calc(100vh - 56px)}
+.sidebar{
+  background:var(--navy2);border-right:1px solid var(--border2);
+  padding:16px 0;overflow-y:auto;max-height:calc(100vh - 56px);
+  position:sticky;top:56px;
+}
+.sw-head{
+  display:flex;align-items:center;gap:7px;padding:7px 14px;
+  cursor:pointer;transition:background .15s;
+}
+.sw-head:hover{background:var(--navy3)}
+.sw-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sw-title{font-size:11px;font-weight:600;color:var(--textmid);letter-spacing:.06em;flex:1}
+.sw-arr{font-size:9px;color:var(--textdim);transition:transform .2s}
+.sw-arr.open{transform:rotate(90deg)}
+.sw-lessons{overflow:hidden;max-height:0;transition:max-height .3s}
+.sw-lessons.open{max-height:400px}
+.sl{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 14px 7px 26px;cursor:pointer;transition:all .15s;
+  border-left:2px solid transparent;
+}
+.sl:hover{background:var(--navy3)}
+.sl.active{background:rgba(0,229,255,.06);border-left-color:var(--cyan)}
+.sl.locked-l{opacity:.4;cursor:not-allowed}
+.sl-check{
+  width:17px;height:17px;border-radius:50%;border:1.5px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;transition:all .2s;
+}
+.sl-check.done{background:var(--green);border-color:var(--green);color:#fff}
+.sl-text{font-size:12px;color:var(--textmid);flex:1;line-height:1.3}
+.sl.active .sl-text{color:var(--text)}
+.lc{padding:28px 36px;max-width:820px}
+.lc-bc{font-size:12px;color:var(--textdim);margin-bottom:16px;display:flex;align-items:center;gap:5px}
+.lc-bc span{cursor:pointer;transition:color .15s}
+.lc-bc span:hover{color:var(--textmid)}
+.lc-wbadge{display:inline-block;font-size:10px;font-weight:600;padding:3px 9px;border-radius:99px;margin-bottom:8px}
+.lc-title{font-size:26px;font-weight:700;color:var(--white);margin-bottom:5px;line-height:1.2}
+.lc-meta{font-size:12px;color:var(--textmid);margin-bottom:20px}
+
+/* VIDEO */
+.vsec{margin-bottom:24px}
+.vsec-lbl{font-size:10px;font-weight:600;color:var(--textmid);letter-spacing:.08em;margin-bottom:8px}
+.vwrap{
+  background:var(--navy3);border:1px solid var(--border2);border-radius:11px;
+  aspect-ratio:16/9;overflow:hidden;position:relative;
+}
+.vplaceholder{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:100%;gap:10px;color:var(--textmid);
+}
+.vplay{
+  width:52px;height:52px;background:rgba(0,229,255,.12);
+  border:2px solid var(--cyan2);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+}
+.viframe{width:100%;height:100%;border:none}
+
+/* SLIDES */
+.ssec{margin-bottom:24px}
+.sviewer{background:var(--navy3);border:1px solid var(--border2);border-radius:11px;overflow:hidden}
+.stoolbar{
+  display:flex;align-items:center;gap:7px;padding:9px 14px;
+  border-bottom:1px solid var(--border2);background:var(--navy2);
+}
+.stb-lbl{font-size:12px;color:var(--textmid);font-weight:500}
+.stb-btn{
+  background:none;border:1px solid var(--border);color:var(--textmid);
+  font-size:11px;padding:4px 9px;border-radius:5px;cursor:pointer;font-family:var(--font);transition:all .15s;
+}
+.stb-btn:hover{border-color:var(--cyan2);color:var(--text)}
+.scontent{padding:16px;text-align:center;color:var(--textdim);font-size:12px}
+.sdropzone{
+  border:2px dashed var(--border);border-radius:9px;padding:28px;
+  text-align:center;cursor:pointer;transition:all .2s;
+}
+.sdropzone:hover{border-color:var(--cyan2);background:rgba(0,229,255,.02)}
+
+/* SCRIPT */
+.card-collapsible{
+  background:var(--navy2);border:1px solid var(--border2);border-radius:11px;
+  overflow:hidden;margin-bottom:16px;
+}
+.cc-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 16px;cursor:pointer;border-bottom:1px solid transparent;transition:border-color .15s;
+}
+.cc-head.open{border-bottom-color:var(--border2)}
+.cc-title{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:7px}
+.cc-ico{width:22px;height:22px;background:rgba(0,229,255,.1);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px}
+.cc-arr{font-size:10px;color:var(--textdim);transition:transform .2s}
+.cc-arr.open{transform:rotate(180deg)}
+.cc-body{display:none;padding:16px}
+.cc-body.open{display:block}
+.script-note{
+  background:rgba(0,229,255,.05);border-left:2px solid var(--cyan2);
+  padding:7px 11px;border-radius:0 5px 5px 0;font-size:12px;color:var(--cyan3);
+  font-style:italic;margin-bottom:10px;
+}
+.script-txt{font-size:13px;line-height:1.8;color:var(--textmid);white-space:pre-line}
+.hw-box{background:rgba(30,58,95,.4);border-radius:8px;padding:11px 14px;margin-top:12px}
+.hw-lbl{font-size:10px;font-weight:600;color:var(--cyan);letter-spacing:.06em;margin-bottom:6px}
+.hw-txt{font-size:13px;color:var(--textmid);line-height:1.7;white-space:pre-line}
+
+/* QUIZ */
+.quiz-locked{
+  background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);
+  border-radius:11px;padding:20px;text-align:center;margin-bottom:16px;
+}
+.quiz-locked-icon{font-size:28px;margin-bottom:8px}
+.quiz-locked-msg{font-size:14px;font-weight:600;color:#FCA5A5;margin-bottom:4px}
+.quiz-locked-sub{font-size:12px;color:var(--textdim)}
+.quiz-body{display:none;padding:16px}
+.quiz-body.open{display:block}
+.qq{margin-bottom:18px}
+.qq-num{font-size:10px;font-weight:600;color:var(--textdim);letter-spacing:.06em;margin-bottom:5px}
+.qq-text{font-size:14px;font-weight:500;color:var(--text);margin-bottom:10px}
+.qq-opts{display:flex;flex-direction:column;gap:7px}
+.qopt{
+  display:flex;align-items:center;gap:9px;padding:9px 13px;
+  border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s;
+  background:none;font-family:var(--font);font-size:13px;color:var(--textmid);text-align:left;width:100%;
+}
+.qopt:hover:not(:disabled){border-color:var(--cyan2);color:var(--text);background:rgba(0,229,255,.04)}
+.qopt.correct{border-color:var(--green);color:var(--green);background:rgba(34,197,94,.08)}
+.qopt.wrong{border-color:var(--red);color:var(--red);background:rgba(239,68,68,.08)}
+.qopt.selected-pre{border-color:var(--cyan2);background:rgba(0,229,255,.06)}
+.qopt:disabled{cursor:default}
+.qletter{
+  width:21px;height:21px;border-radius:50%;border:1.5px solid currentColor;
+  display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;
+}
+.qexp{
+  margin-top:7px;padding:8px 11px;border-radius:7px;
+  font-size:12px;line-height:1.5;display:none;
+}
+.qexp.show{display:block}
+.qexp.ok{background:rgba(34,197,94,.1);color:#86EFAC}
+.qexp.no{background:rgba(239,68,68,.1);color:#FCA5A5}
+.quiz-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.qsubmit{
+  background:var(--cyan);color:var(--navy);font-family:var(--font);
+  font-weight:700;font-size:14px;padding:10px 22px;border-radius:8px;
+  border:none;cursor:pointer;transition:all .2s;
+}
+.qsubmit:hover:not(:disabled){background:var(--cyan3)}
+.qsubmit:disabled{background:var(--navy4);color:var(--textdim);cursor:default}
+.qreset{
+  background:none;border:1px solid var(--border);color:var(--textmid);
+  font-family:var(--font);font-size:12px;padding:10px 14px;border-radius:8px;cursor:pointer;
+}
+.qreset:hover{border-color:var(--textmid);color:var(--text)}
+.qscore-wrap{text-align:center;padding:16px;background:var(--navy3);border-radius:10px;margin-top:10px}
+.qscore-num{font-size:40px;font-weight:700}
+.qscore-lbl{font-size:13px;color:var(--textmid);margin-top:5px}
+.qscore-pass{font-size:13px;margin-top:6px}
+
+/* LESSON NAV */
+.lnav{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:28px;padding-top:20px;border-top:1px solid var(--border2);
+}
+.lnav-btn{
+  display:flex;align-items:center;gap:7px;background:none;
+  border:1px solid var(--border);color:var(--textmid);font-family:var(--font);
+  font-size:12px;font-weight:500;padding:9px 14px;border-radius:8px;cursor:pointer;transition:all .15s;
+}
+.lnav-btn:hover{border-color:var(--cyan2);color:var(--text)}
+.lnav-done{background:var(--green);border-color:var(--green);color:#fff;font-weight:700}
+.lnav-done:hover{background:#16A34A}
+.lnav-locked{opacity:.4;cursor:not-allowed}
+
+/* CERT */
+#certPage{padding:36px 24px;max-width:660px;margin:0 auto}
+.cert-check{
+  background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);
+  border-radius:12px;padding:16px;text-align:center;margin-bottom:24px;
+}
+.cert-check.locked{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.25)}
+.cert-check-msg{font-size:14px;font-weight:600;color:var(--green);margin-bottom:4px}
+.cert-check.locked .cert-check-msg{color:#FCA5A5}
+.cert-check-sub{font-size:12px;color:var(--textdim)}
+.cert-form{background:var(--navy2);border:1px solid var(--border2);border-radius:14px;padding:24px;margin-bottom:22px}
+.cert-form-row{display:flex;gap:10px;flex-wrap:wrap}
+.cert-form-half{flex:1;min-width:180px}
+.cert-lbl{font-size:11px;font-weight:600;color:var(--textmid);letter-spacing:.06em;display:block;margin-bottom:5px}
+.cert-input{
+  width:100%;background:var(--navy3);border:1px solid var(--border);
+  color:var(--text);font-size:13px;padding:10px 12px;border-radius:8px;margin-bottom:12px;
+}
+.cert-input:focus{outline:none;border-color:var(--cyan2)}
+.cert-preview{background:var(--navy2);border:1px solid var(--border2);border-radius:14px;overflow:hidden}
+.cp-lbl{padding:10px 16px;border-bottom:1px solid var(--border2);font-size:11px;font-weight:600;color:var(--textmid);letter-spacing:.06em}
+.cert-doc{
+  margin:20px;background:var(--navy);border:1px solid var(--navy4);
+  border-radius:10px;padding:32px;text-align:center;position:relative;overflow:hidden;
+}
+.cert-doc::before{
+  content:'';position:absolute;inset:0;
+  background-image:linear-gradient(rgba(0,229,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.025) 1px,transparent 1px);
+  background-size:28px 28px;
+}
+.cert-corner{position:absolute;width:50px;height:50px;border-color:var(--cyan2);border-style:solid;opacity:.35}
+.cert-tl{top:12px;left:12px;border-width:2px 0 0 2px;border-radius:3px 0 0 0}
+.cert-tr{top:12px;right:12px;border-width:2px 2px 0 0;border-radius:0 3px 0 0}
+.cert-bl{bottom:12px;left:12px;border-width:0 0 2px 2px;border-radius:0 0 0 3px}
+.cert-br{bottom:12px;right:12px;border-width:0 2px 2px 0;border-radius:0 0 3px 0}
+.cdoc-bolt{width:40px;height:40px;background:var(--cyan);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:7px;position:relative}
+.cdoc-acad{font-size:10px;font-weight:600;color:var(--cyan);letter-spacing:.14em;margin-bottom:10px;position:relative}
+.cdoc-title{font-size:10px;font-weight:600;color:var(--textdim);letter-spacing:.1em;margin-bottom:10px;position:relative}
+.cdoc-presents{font-size:14px;color:var(--textmid);margin-bottom:6px;position:relative}
+.cdoc-name{font-size:24px;font-weight:700;color:var(--white);margin-bottom:6px;min-height:30px;position:relative}
+.cdoc-line{height:1px;background:linear-gradient(90deg,transparent,var(--cyan2),transparent);margin:0 40px 13px;position:relative}
+.cdoc-course-lbl{font-size:9px;font-weight:600;color:var(--cyan3);letter-spacing:.08em;margin-bottom:3px;position:relative}
+.cdoc-course{font-size:12px;color:var(--text);margin-bottom:16px;position:relative}
+.cdoc-details{display:flex;justify-content:center;gap:24px;margin-bottom:16px;position:relative}
+.cdoc-det{text-align:center}
+.cdoc-det-v{font-size:12px;font-weight:600;color:var(--white)}
+.cdoc-det-l{font-size:9px;color:var(--textdim);margin-top:1px;letter-spacing:.05em}
+.cdoc-sigs{display:flex;justify-content:space-between;align-items:flex-end;padding-top:13px;border-top:1px solid var(--border2);position:relative}
+.cdoc-sig{text-align:center}
+.cdoc-sig-line{height:1px;background:var(--border);width:100px;margin:0 auto 3px}
+.cdoc-sig-name{font-size:10px;color:var(--textdim)}
+.cdoc-id{font-size:8px;color:var(--textdim);font-family:var(--mono)}
+
+@media(max-width:768px){
+  .lesson-layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .lc{padding:16px}
+  .tb-nav{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH PAGE -->
+<div class="page active" id="authPage">
+  <div class="auth-wrap">
+    <div class="auth-logo">
+      <div class="auth-bolt">⚡</div>
+      <div class="auth-brand">Spark<span>Flow</span></div>
+      <div class="auth-sub">Студент кабинеті</div>
+    </div>
+    <div class="auth-title">Кіру</div>
+    <div class="form-group">
+      <label class="form-label">ЛОГИН</label>
+      <input class="form-input" type="text" id="loginInput" placeholder="Логиніңізді енгізіңіз" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label class="form-label">ПАРОЛЬ</label>
+      <input class="form-input" type="password" id="passInput" placeholder="Парольді енгізіңіз" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn-primary" id="loginBtn" onclick="doLogin()">Кіру →</button>
+    <div class="auth-error" id="authError"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="page" id="appPage">
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div class="tb-logo" onclick="goPage('home')">
+      <div class="tb-bolt">⚡</div>
+      <span class="tb-brand">Spark<span>Flow</span></span>
+    </div>
+    <nav class="tb-nav">
+      <button class="tb-btn active" id="nav-home" onclick="goPage('home')">Басты бет</button>
+      <button class="tb-btn" id="nav-lessons" onclick="goPage('lessons')">Сабақтар</button>
+      <button class="tb-btn" id="nav-cert" onclick="goPage('cert')">Сертификат</button>
+    </nav>
+    <div class="tb-right">
+      <div class="tb-prog">
+        <span id="progText">0/20</span>
+        <div class="tb-progbar"><div class="tb-progfill" id="progFill" style="width:0%"></div></div>
+      </div>
+      <div class="tb-user">
+        <div class="tb-avatar" id="tbAvatar">—</div>
+        <span class="tb-username" id="tbUsername">...</span>
+        <button class="tb-logout" onclick="doLogout()" title="Шығу">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div class="page active" id="homePage">
+    <div class="hero">
+      <div class="hero-grid"></div>
+      <div class="hero-glow"></div>
+      <div class="hero-badge"><span class="hdot"></span>SparkFlow Academy</div>
+      <h1>Электр инженериясы<br><span class="acc">нөлден практикаға</span></h1>
+      <p class="hero-sub">4 апта, 20 сабақ. Теориядан AutoCAD-қа дейін — барлығы бір платформада.</p>
+      <div class="hero-stats">
+        <div class="hstat"><div class="hstat-n">4</div><div class="hstat-l">АПТА</div></div>
+        <div class="hstat"><div class="hstat-n">20</div><div class="hstat-l">САБАҚ</div></div>
+        <div class="hstat"><div class="hstat-n">40+</div><div class="hstat-l">ТАПСЫРМА</div></div>
+        <div class="hstat"><div class="hstat-n">0</div><div class="hstat-l">ТАЛАП</div></div>
+      </div>
+      <div class="hero-btns">
+        <button class="btn-hero" onclick="goPage('lessons');openWeek(0)">Оқуды бастау →</button>
+        <button class="btn-ghost" onclick="goPage('cert')">Сертификат</button>
+      </div>
+    </div>
+    <div class="weeks-sec">
+      <div class="sec-head"><div class="sec-lbl">БАҒДАРЛАМА</div><div class="sec-line"></div></div>
+      <div class="weeks-grid" id="weeksGrid"></div>
+    </div>
+  </div>
+
+  <!-- LESSONS -->
+  <div class="page" id="lessonsPage">
+    <div class="lesson-layout">
+      <aside class="sidebar" id="sidebar"></aside>
+      <main class="lc" id="lessonContent">
+        <p style="color:var(--textmid);font-size:14px;margin-top:20px">Сол жақ мәзірден сабақ таңдаңыз.</p>
+      </main>
+    </div>
+  </div>
+
+  <!-- CERT -->
+  <div class="page" id="certPage" style="max-width:720px;margin:0 auto;padding:32px 20px">
+    <div id="certStatus"></div>
+    <div style="background:var(--navy2);border:1px solid var(--border2);border-radius:14px;padding:22px;margin-bottom:20px">
+      <div style="font-size:13px;font-weight:600;color:var(--textmid);letter-spacing:.06em;margin-bottom:14px">СЕРТИФИКАТ МӘЛІМЕТТЕРІ</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        <div style="flex:1;min-width:180px">
+          <label style="font-size:11px;font-weight:600;color:var(--textmid);display:block;margin-bottom:5px">АТЫ-ЖӨНІҢІЗ</label>
+          <input style="width:100%;background:var(--navy3);border:1px solid var(--border);color:var(--text);font-size:13px;padding:9px 12px;border-radius:8px;outline:none" id="certName" placeholder="Толық аты-жөніңіз" oninput="refreshCert()">
+        </div>
+        <div style="flex:1;min-width:180px">
+          <label style="font-size:11px;font-weight:600;color:var(--textmid);display:block;margin-bottom:5px">АЯҚТАҒАН КҮН</label>
+          <input type="date" style="width:100%;background:var(--navy3);border:1px solid var(--border);color:var(--text);font-size:13px;padding:9px 12px;border-radius:8px;outline:none" id="certDate" oninput="refreshCert()">
+        </div>
+      </div>
+      <button class="btn-primary" id="certDlBtn" onclick="downloadCert()" style="width:100%;padding:13px;font-size:15px">⬇ PDF сертификат жүктеу</button>
+      <button id="certPreviewBtn" style="width:100%;margin-top:8px;padding:11px;font-size:13px;background:none;border:1px solid var(--border);color:var(--textmid);border-radius:10px;cursor:default;display:none">👁 Алдын ала қарау (барлық сабақты аяқтаңыз)</button>
+    </div>
+    <div style="background:var(--navy2);border:1px solid var(--border2);border-radius:14px;overflow:hidden">
+      <div style="padding:10px 16px;border-bottom:1px solid var(--border2);font-size:11px;font-weight:600;color:var(--textmid);letter-spacing:.06em">АЛДЫН АЛА ҚАРАУ</div>
+      <div style="padding:20px" id="certPreviewArea">
+        <div id="certDoc" style="background:var(--navy);border:1px solid var(--navy4);border-radius:12px;padding:36px;text-align:center;position:relative;overflow:hidden">
+          <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(0,229,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.025) 1px,transparent 1px);background-size:28px 28px"></div>
+          <!-- Corners -->
+          <div style="position:absolute;top:12px;left:12px;width:40px;height:40px;border-top:2px solid #00BCD4;border-left:2px solid #00BCD4;opacity:.4;border-radius:3px 0 0 0"></div>
+          <div style="position:absolute;top:12px;right:12px;width:40px;height:40px;border-top:2px solid #00BCD4;border-right:2px solid #00BCD4;opacity:.4;border-radius:0 3px 0 0"></div>
+          <div style="position:absolute;bottom:12px;left:12px;width:40px;height:40px;border-bottom:2px solid #00BCD4;border-left:2px solid #00BCD4;opacity:.4;border-radius:0 0 0 3px"></div>
+          <div style="position:absolute;bottom:12px;right:12px;width:40px;height:40px;border-bottom:2px solid #00BCD4;border-right:2px solid #00BCD4;opacity:.4;border-radius:0 0 3px 0"></div>
+          <div style="position:relative">
+            <div style="width:52px;height:52px;background:#00E5FF;border-radius:13px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:10px">⚡</div>
+            <div id="cdocAcad" style="font-size:11px;font-weight:700;color:#00E5FF;letter-spacing:.14em;margin-bottom:10px">SPARKFLOW ACADEMY</div>
+            <div style="font-size:10px;font-weight:600;color:var(--textdim);letter-spacing:.1em;margin-bottom:12px">АЯҚТАУ СЕРТИФИКАТЫ</div>
+            <div style="font-size:16px;color:var(--textmid);margin-bottom:8px">Осы сертификат берілді</div>
+            <div id="cdocName" style="font-size:28px;font-weight:700;color:#fff;margin-bottom:8px;min-height:36px">Аты-жөніңіз</div>
+            <div style="height:1px;background:linear-gradient(90deg,transparent,#00BCD4,transparent);margin:0 50px 16px"></div>
+            <div style="font-size:10px;font-weight:600;color:#80DEEA;letter-spacing:.08em;margin-bottom:4px">КУРС</div>
+            <div id="cdocCourse" style="font-size:13px;color:var(--text);margin-bottom:20px">Электр инженериясы — нөлден практикалық дағдыларға дейін</div>
+            <div style="display:flex;justify-content:center;gap:32px;margin-bottom:20px">
+              <div style="text-align:center"><div id="cdocDur" style="font-size:13px;font-weight:600;color:#fff">4 апта · 20 сабақ</div><div style="font-size:9px;color:var(--textdim);margin-top:3px;letter-spacing:.06em">ҰЗАҚТЫҒЫ</div></div>
+              <div style="text-align:center"><div id="cdocDate" style="font-size:13px;font-weight:600;color:#fff">—</div><div style="font-size:9px;color:var(--textdim);margin-top:3px;letter-spacing:.06em">КҮН</div></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-top:14px;border-top:1px solid var(--border2)">
+              <div style="text-align:center"><div style="height:1px;background:var(--border);width:110px;margin:0 auto 4px"></div><div id="cdocSchool" style="font-size:10px;color:var(--textdim)">SparkFlow Academy</div></div>
+              <div id="cdocId" style="font-size:8px;color:var(--textdim);font-family:monospace;letter-spacing:.05em">ID: SFA-2024-0001</div>
+              <div style="text-align:center"><div style="height:1px;background:var(--border);width:110px;margin:0 auto 4px"></div><div id="cdocTeacher" style="font-size:10px;color:var(--textdim)">Мұғалім</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// REST API based - no SDK needed
+
+// ─── COURSE DATA (from DB or default) ────────────────────────────────────────
+let COURSE = null;
+let currentUser = null;
+let currentLesson = null;
+let SLIDES_CONFIG = {};
+let CERT_CONFIG = {};
+let userProgress = {};
+let quizStates = {};
+let weekOpen = [true,false,false,false];
+
+const DEFAULT_COURSE = [
+  { id:1, title:"Электрдің негіздері", sub:"Теория + қауіпсіздік", color:"#1E88E5",
+    lessons:[
+      {id:"1-1",num:"01",title:"Электр дегеніміз не?",meta:"30 мин · Теория",
+       script:"Сәлеметсіздер ме! SparkFlow Academy-ге қош келдіңіздер.\n\nЭлектр — электрондардың қозғалысы. Су аналогиясы:\n— Су мұнарасы → Батарея (кернеу береді)\n— Құбыр → Сым (ток өтетін жол)\n— Кран → Тұтынушы (шам, розетка)\n\nТізбек (Circuit) — электрдің тұйықталған жолы. Тек тұйықталған тізбекте ток ағады.\nӨткізгіш — ток жақсы өтетін зат: мыс, алюминий, темір.\nОқшаулагыш — ток өтпейтін зат: резина, пластик, ауа.",
+       hw:"1. Үйдегі 5 электрлік құрылғыны тауып жазыңыз.\n2. Олардың қайсысы DC, қайсысы AC?\n3. Бір сымды ойша кесіп — ішінде не бар?",
+       video:"",
+       quiz:[
+         {q:"Ток ағу үшін тізбек қандай болуы керек?",opts:["Ашық","Тұйықталған","Металдан жасалған","Кернеу жоғары"],ans:1,exp:"Ток тек ТҰЙЫҚТАЛҒАН тізбекте ағады."},
+         {q:"Өткізгіш дегеніміз не?",opts:["Ток өтпейтін зат","Ток жақсы өтетін зат","Тек темір","Тек мыс"],ans:1,exp:"Өткізгіш — мыс, алюминий, темір, су."}
+       ]},
+      {id:"1-2",num:"02",title:"Кернеу, Ток, Қуат",meta:"35 мин · Есеп",
+       script:"Үш маңызды ұғым:\n\nV — Кернеу (Вольт): электрді «итеретін» күш. Үй розеткасы: 220В.\nI — Ток (Ампер): ағыс мөлшері. Шайнек: 8А.\nP — Қуат (Ватт): P = V × I\n\nМысал: Шайнек 220 × 8 = 1760 Вт\nКондиционер 2200Вт → I = 2200÷220 = 10А",
+       hw:"1. 3 құрылғының паспортынан қуатын тауып, I = P÷220 есептеңіз.\n2. Телефон зарядтағышының Input мен Output мәндерін оқыңыз.\n3. Ас үйдің жалпы қуатын есептеңіз.",
+       video:"",
+       quiz:[
+         {q:"Шайнек: 220В, 8А. Қуаты?",opts:["228 Вт","1760 Вт","880 Вт","27.5 Вт"],ans:1,exp:"P = V × I = 220 × 8 = 1760 Ватт."},
+         {q:"P = V × I формуласындағы I нені білдіреді?",opts:["Қуат","Кернеу","Ток","Кедергі"],ans:2,exp:"I — ток, Амперде өлшенеді."}
+       ]},
+      {id:"1-3",num:"03",title:"AC және DC",meta:"25 мин · Теория",
+       script:"DC — бір бағытта ағады: батарея, USB, телефон.\nAC — секундына 50 рет бағытын ауыстырады: үй розеткасы.\n\nҚазақстан стандарты: 220В, 50Гц.\nЗарядтағыш: Input AC 220В → Output DC 5В.",
+       hw:"1. Үйден AC×3 және DC×3 құрылғы табыңыз.\n2. Зарядтағыш артын оқып, Input мен Output жазыңыз.",
+       video:"",
+       quiz:[
+         {q:"Үй розеткасы қандай ток береді?",opts:["DC","AC","Екеуі де","Бірде-біреуі"],ans:1,exp:"Үй розеткасы AC береді — 220В, 50Гц."},
+         {q:"Телефон зарядтағышы не жасайды?",opts:["DC→AC","AC→DC","Кернеуді арттырады","Токты азайтады"],ans:1,exp:"Зарядтағыш AC токты DC-ке ауыстырады."}
+       ]},
+      {id:"1-4",num:"04",title:"Электр қауіпсіздігі",meta:"30 мин · Маңызды",
+       script:"50мА ток адамды өлтіре алады!\n\n6 ереже:\n1. Сулы қолмен ұстама\n2. Жұмыс алдында автоматты өшір\n3. Ашық сымды жалаңаш қолмен ұстама\n4. Артық жүктеме жасама (>3500Вт)\n5. Ванна бөлмесінде абай бол\n6. Жалғыз жұмыс жасама",
+       hw:"1. Үйдегі 5 қауіпті жағдайды анықтаңыз.\n2. Щиттің фотосын түсіріп, автоматтар санын жазыңыз.",
+       video:"",
+       quiz:[
+         {q:"Адамға қауіпті ток деңгейі?",opts:["500мА","50мА","5А","1А"],ans:1,exp:"50 миллиампер — жүрек ырғағын бұзуы мүмкін."},
+         {q:"Жұмыс алдында не жасау керек?",opts:["Қолғап кию","Автоматты өшіру","Мультиметр дайындау","Жедел жәрдем"],ans:1,exp:"Алдымен щиттегі автоматты өшіру міндетті."}
+       ]},
+      {id:"1-5",num:"05",title:"1-апта тесті",meta:"30 мин · Тест",
+       script:"1-апта аяқталды!\n\n✓ Электр дегеніміз не\n✓ P = V × I формуласы\n✓ AC vs DC\n✓ Қауіпсіздік ережелері\n\nТесттен 70% алсаңыз — 2-аптаға өтесіз!",
+       hw:"2-аптаға дайындық: «Кабель маркировкасы ВВГ» іздеп оқыңыз.",
+       video:"",
+       quiz:[
+         {q:"Қазақстандағы үй розеткасының кернеуі?",opts:["110В","380В","220В","12В"],ans:2,exp:"Қазақстан стандарты: 220В, 50Гц."},
+         {q:"Кондиционер 2200Вт, 220В. Тоғы?",opts:["10А","20А","5А","100А"],ans:0,exp:"I = 2200÷220 = 10А."}
+       ]}
+    ]
+  },
+  { id:2, title:"Практикалық орнату", sub:"Кабель · Автомат · Щит", color:"#E65100",
+    lessons:[
+      {id:"2-1",num:"06",title:"Кабельдер мен сымдар",meta:"35 мин · Практика",
+       script:"ВВГ нг-LS 3×2.5 маркировкасы:\n— ВВГ = кабель типі\n— нг = өртке қарсы\n— LS = аз түтін\n— 3 = жілдер саны\n— 2.5 = кесінді мм²\n\nКесінді: 1.5мм²=Жарық · 2.5мм²=Розетка · 6мм²=Плита",
+       hw:"1. Үйдегі кабельдің маркировкасын оқыңыз.\n2. ВВГ нг 3×2.5 бағасын іздеңіз.\n3. 3 бөлмелі пәтерге қай кабельдер керек?",
+       video:"",
+       quiz:[
+         {q:"ВВГ нг 3×2.5 кабелінде «3» нені білдіреді?",opts:["Ұзындық","Жілдер саны","Кесінді","Тип нұсқасы"],ans:1,exp:"3 — жілдер саны: Фаза+Нөл+Жерлеу."},
+         {q:"Розеткалар үшін стандартты кесінді?",opts:["1.5мм²","2.5мм²","4мм²","6мм²"],ans:1,exp:"2.5мм² — розеткалардың стандартты кесіндісі."}
+       ]},
+      {id:"2-2",num:"07",title:"Автоматты ажыратқыштар",meta:"35 мин · Теория",
+       script:"С16: С=мінездеме, 16=номинал (А)\n\nНоминалдар: 10А=Жарық · 16А=Розетка · 32А=Плита\n\nУЗО (RCD) — адамды қорғайды (30мА). Ванна+сыртқа міндетті!",
+       hw:"1. Щиттегі автоматтардың маркировкасын жазыңыз.\n2. Үйде УЗО бар ма?",
+       video:"",
+       quiz:[
+         {q:"2.5мм² кабельге қандай автомат?",opts:["10А","16А","25А","32А"],ans:1,exp:"2.5мм² кабель үшін стандарт — 16А автомат."},
+         {q:"УЗО мен автоматтың айырмасы?",opts:["Бірдей","Автомат=кабель, УЗО=адам","УЗО=кабель, Автомат=адам","Тек сыртта"],ans:1,exp:"Автомат кабельді, УЗО адамды қорғайды."}
+       ]},
+      {id:"2-3",num:"08",title:"Жүктемені есептеу",meta:"40 мин · Есеп",
+       script:"I = P ÷ 220\n\nАс үй: Шайнек 2000+МТП 1000+Тостер 800=3800Вт\nКоэф 0.8: 3800×0.8=3040Вт → I=13.8А → 16А, 2.5мм²\n\nПлита: 6000÷220=27.3А → 32А, 6мм² (жеке тізбек!)",
+       hw:"1. Пәтеріңіздің жүктеме кестесін толтырыңыз.\n2. Ас үй тізбегінің жалпы қуаты қанша?",
+       video:"",
+       quiz:[
+         {q:"Ас үй 3040Вт, 220В. Тоғы?",opts:["13.8А","30А","6.9А","1А"],ans:0,exp:"I = 3040÷220 = 13.8А."},
+         {q:"Плитаны жеке тізбекке қосу керек пе?",opts:["Жоқ","Иә, міндетті","Тек 3 бөлмелі пәтерде","Тек 380В болса"],ans:1,exp:"Плита жеке тізбек + 6мм² + 32А."}
+       ]},
+      {id:"2-4",num:"09",title:"Тарату щиті",meta:"40 мин · Практика",
+       script:"Щитте: кіріс ВА · УЗО · тізбек автоматтары · N шина · PE шина · DIN рейка\n\nN мен PE БӨЛЕК болуы керек! (TN-S)\n\nЖинау реті: Автоматтар → N+PE шиналар → Кіріс кабелі → Тізбек кабельдері → Маркировка",
+       hw:"1. Щиттің фотосын түсіріп: N мен PE бөлек пе?\n2. 2 бөлмелі пәтер үшін щит схемасын сызыңыз.",
+       video:"",
+       quiz:[
+         {q:"N мен PE шиналарын қосуға болады ма?",opts:["Иә","Жоқ, TN-S-та бөлек","Тек ескі үйде","Тек 3 фаза болса"],ans:1,exp:"TN-S жүйесінде N мен PE міндетті бөлек."},
+         {q:"Щитте ең алдымен не?",opts:["Тізбек кабельдері","Кіріс кабелі","Автоматтар DIN-ге","N шинасы"],ans:2,exp:"Алдымен DIN рейкаға автоматтарды орнатамыз."}
+       ]},
+      {id:"2-5",num:"10",title:"2-апта тесті",meta:"45 мин · Тест",
+       script:"2-апта аяқталды!\n\n✓ Кабель маркировкасы\n✓ Автомат номиналдары + УЗО\n✓ Жүктеме есебі (I=P÷V)\n✓ Щит жинау реті\n\nТесттен 70% алсаңыз — 3-аптаға өтесіз!",
+       hw:"3-аптаға дайындық:\n1. «Однолинейная схема квартиры» іздеңіз.\n2. 3 сызба түрінің айырмасын жазыңыз.",
+       video:"",
+       quiz:[
+         {q:"Кіріс автоматын таңдауда қандай коэффициент?",opts:["0.5","0.7","0.9","1.0"],ans:1,exp:"Тұрғын үйде 0.7 коэффициент қолданылады."},
+         {q:"2.5мм² кабельге сәйкес автомат?",opts:["10А","16А","25А","32А"],ans:1,exp:"2.5мм² → 16А автомат."}
+       ]}
+    ]
+  },
+  { id:3, title:"Электр сызбалары", sub:"Белгілер · SLD · Монтаж", color:"#00897B",
+    lessons:[
+      {id:"3-1",num:"11",title:"Сызба түрлері",meta:"30 мин · Теория",
+       script:"3 негізгі сызба:\n1. Принципиалдық — «Не байланысқан?» (логика)\n2. Монтаждық — «Қайда орналасқан?» (орын)\n3. SLD — «Жалпы суреті?» (карта)\n\nБір жобада үшеуі де болады!",
+       hw:"1. «Однолинейная схема квартиры» іздеп, автоматты анықтаңыз.\n2. Монтаждық сызба іздеп, 3 элементті атаңыз.",
+       video:"",
+       quiz:[
+         {q:"«Нақты орны?» — қай сызба?",opts:["Принципиалдық","Монтаждық","SLD","Щит схемасы"],ans:1,exp:"Монтаждық сызба нақты орынды көрсетеді."},
+         {q:"SLD неге арналған?",opts:["Нақты орын","Жалпы жүйе картасы","Автомат ішкі схемасы","Тек ванна"],ans:1,exp:"SLD — жүйенің жалпы картасы."}
+       ]},
+      {id:"3-2",num:"12",title:"Электр белгілері",meta:"35 мин · 15 белгі",
+       script:"Негізгі белгілер:\nШам → шеңбер + крест\nРозетка → жартышеңбер + 2 сызық\nВыключатель → сызық + флажок\nАвтомат → тіктөртбұрыш + тік сызық\nУЗО → тіктөртбұрыш + «Т»\nЖерлеу (PE) → 3 азаятын горизонталь сызық\nЖасырын кабель → үзік сызық",
+       hw:"1. 15 белгіні дефтерге сызыңыз.\n2. Шам, розетка, автомат, УЗО, жерлеуді жадтан сызыңыз.",
+       video:"",
+       quiz:[
+         {q:"«Шеңбер + крест» белгісі не?",opts:["Розетка","Шам нүктесі","Выключатель","Автомат"],ans:1,exp:"Шеңбер + крест = шам (лампа)."},
+         {q:"«Үш азаятын горизонталь сызық» не?",opts:["Трансформатор","Нөл","Жерлеу (PE)","Конденсатор"],ans:2,exp:"Жерлеу (PE) белгісі."}
+       ]},
+      {id:"3-3",num:"13",title:"Бір сызықты схема (SLD)",meta:"40 мин · SLD",
+       script:"SLD оқудың 6 қадамы:\n1. Кіріс нүктесін тап → «220В» жоғарыда\n2. Кіріс автоматын анықта\n3. Тізбектерді сана\n4. Автомат номиналдарын оқы (C10, C16)\n5. Кабельді оқы → «ВВГ 3×2.5»\n6. Жерлеуді тексер → PE шинасы",
+       hw:"1. 8-сабақтың жүктеме кестесінен SLD сызыңыз.\n2. Кіріс автоматы, тізбектер, УЗО, N мен PE болсын.",
+       video:"",
+       quiz:[
+         {q:"SLD-тің дұрыс оқу реті?",opts:["Тізбек→кіріс","Кіріс→автомат→тізбек→PE/N","Жерлеу→шина→тізбек","Автомат→кернеу"],ans:1,exp:"Кіріс кернеуі → кіріс автомат → тізбектер → N/PE шиналар."},
+         {q:"SLD-те C32 нені білдіреді?",opts:["32 метр кабель","C мінездеме, 32А автомат","32 розетка","32-орынды щит"],ans:1,exp:"C — мінездеме, 32 — номинал ток Амперде."}
+       ]},
+      {id:"3-4",num:"14",title:"Монтаждық сызба",meta:"40 мин · Практика",
+       script:"Монтаждық сызбада:\n— Пәтер жоспары\n— Шам + розетка нақты орны\n— Кабель жолдары (үзік=жасырын)\n— Щит орны (ЩК)\n— Кабель маркировкасы\n\nБиіктік: Розетка 30см · Выключатель 90–120см",
+       hw:"1. Өз пәтеріңіздің монтаж сызбасын сызыңыз.\n2. Кабель ұзындығын есептеңіз (+10% запас).",
+       video:"",
+       quiz:[
+         {q:"Розетка едіннен қандай биіктікте?",opts:["10см","30см","90см","120см"],ans:1,exp:"Стандарт: розетка едіннен 30см."},
+         {q:"«Үзік сызық» кабельді белгілеу нені білдіреді?",opts:["Жоспарланған","Жасырын монтаж","Бұзылған","Жерлеу"],ans:1,exp:"Үзік = жасырын монтаж — қабырға ішінде."}
+       ]},
+      {id:"3-5",num:"15",title:"3-апта тесті",meta:"50 мин · Тест",
+       script:"3-апта аяқталды!\n\n✓ Сызба түрлері (принципиалдық, монтаждық, SLD)\n✓ 15 электр белгісі\n✓ SLD оқу 6 қадам\n✓ Монтаждық сызба жасау\n\nТесттен 70% алсаңыз — 4-аптаға өтесіз!",
+       hw:"4-аптаға дайындық:\n1. AutoCAD жүктеп, іске қосыңыз.\n2. DIALux evo тегін жүктеңіз (dialux.com).",
+       video:"",
+       quiz:[
+         {q:"«Кабельдің нақты орны?» — қай сызба?",opts:["Принципиалдық","Монтаждық","SLD","Щит схемасы"],ans:1,exp:"Монтаждық сызба нақты орынды көрсетеді."},
+         {q:"Спецификация дегеніміз не?",opts:["Кабель биіктіктер тізімі","Жобаға қажетті материалдар тізімі","SLD сипаттамасы","Автомат паспорты"],ans:1,exp:"Спецификация — жобаға қажетті барлық материалдардың тізімі."}
+       ]}
+    ]
+  },
+  { id:4, title:"Бағдарламалық жобалау", sub:"AutoCAD · DIALux · Диплом", color:"#7E57C2",
+    lessons:[
+      {id:"4-1",num:"16",title:"AutoCAD-қа кіріспе",meta:"40 мин · Бағдарлама",
+       script:"AutoCAD — ең танымал инженерлік сызу бағдарламасы.\n\nКомандалар:\nL=LINE · C=CIRCLE · REC=RECTANGLE\nCO=COPY · TR=TRIM · O=OFFSET\nB=BLOCK · I=INSERT · LA=LAYER\n\nQабаттар: E-WALLS · E-LIGHTING · E-SOCKETS · E-CABLES · E-PANEL · E-TEXT",
+       hw:"1. AutoCAD-та 6 қабат жасаңыз.\n2. E-LIGHTING-ке шам белгісін сызыңыз.",
+       video:"",
+       quiz:[
+         {q:"AutoCAD-та «L» командасы не?",opts:["LAYER","LINE","LIMITS","LIST"],ans:1,exp:"L = LINE — сызық сызу командасының қысқартуы."},
+         {q:"Кабель жолдарын қай қабатқа?",opts:["E-LIGHTING","E-WALLS","E-CABLES","E-TEXT"],ans:2,exp:"E-CABLES — кабель жолдарына арналған қабат."}
+       ]},
+      {id:"4-2",num:"17",title:"AutoCAD-та электр сызбасы",meta:"50 мин · Блоктар",
+       script:"Блок — бір рет сызылған белгіні сақтап, қайта пайдалану.\n\n7 қадамдық монтаж сызбасы:\n1) E-WALLS → сыртқы қабырға\n2) OFFSET → ішкі қабырғалар\n3) ЩК щит белгісі\n4) INSERT LAMP → бөлмелер ортасы\n5) INSERT SOCKET → едіннен 300мм\n6) DASHED кабель жолдары\n7) Маркировка + SCALE 1:50",
+       hw:"1. 2 бөлмелі пәтердің толық монтаж сызбасын AutoCAD-та жасаңыз.\n2. 6 қабат, 6+ шам, 10+ розетка.",
+       video:"",
+       quiz:[
+         {q:"BLOCK командасы не үшін?",opts:["Кесу","Белгіні сақтап кез-келген жерге қою","Қабатты құлыптау","Масштабтау"],ans:1,exp:"BLOCK — белгіні бір рет сызып сақтайды, INSERT-пен кірістіреді."},
+         {q:"1:50 масштабта 5м бөлме = ? мм",opts:["50мм","100мм","250мм","500мм"],ans:1,exp:"5000мм ÷ 50 = 100мм."}
+       ]},
+      {id:"4-3",num:"18",title:"DIALux жарықтандыру есебі",meta:"45 мин · DIALux",
+       script:"DIALux — тегін кәсіби жарықтандыру есептеу бағдарламасы.\n\nСтандарттар: Офис 500Lux · Ас үй 300Lux · Тұрғын 200Lux · Ванна 150Lux\n\n5 қадам:\n1) Бөлме: 5×4×2.8м\n2) Work plane: 0.8м\n3) Шағылысу: Төбе 70%, Қабырға 50%\n4) LED Panel 36Вт → Calculate!\n5) Uniformity ≥ 0.6 → жақсы",
+       hw:"1. DIALux-та 1 бөлме үшін есеп жасаңыз (200 Lux норма).\n2. Есепті PDF-ке экспорттаңыз.",
+       video:"",
+       quiz:[
+         {q:"Тұрғын бөлмеге минималды Lux норма?",opts:["50","200","500","1000"],ans:1,exp:"ЕН 12464: тұрғын бөлме 200 Lux минимум."},
+         {q:"DIALux-та Work plane не үшін?",opts:["Бөлме биіктігі","Lux есептелетін биіктік (0.8м)","Шам орны","Терезе биіктігі"],ans:1,exp:"Work plane — жарықтылық осы биіктікте өлшенеді."}
+       ]},
+      {id:"4-4",num:"19",title:"Жоба құжаттамасы",meta:"50 мін · Толық пакет",
+       script:"Кәсіби жоба пакеті:\n1. Жоба паспорты\n2. SLD схемасы\n3. Монтаждық сызба (AutoCAD)\n4. DIALux есебі (PDF)\n5. Жүктеме кестесі\n6. Спецификация\n\nШтамп (ГОСТ 21.101) — МІНДЕТТІ!\nПапка: 01_Паспорт · 02_SLD · 03_Монтаж · 04_DIALux · 05_Жүктеме · 06_Спецификация",
+       hw:"1. Жоба папкасын ұйымдастырыңыз.\n2. AutoCAD сызбаларыңызға штамп қосыңыз.\n3. Барлық DWG → PDF экспорттаңыз.",
+       video:"",
+       quiz:[
+         {q:"Штамп неліктен міндетті?",opts:["Сұлулық үшін","ГОСТ 21.101 міндеттейді","Тек мемлекеттік жобада","AutoCAD талабы"],ans:1,exp:"Штамп ГОСТ 21.101 бойынша міндетті — штампсыз сызба жарамсыз."},
+         {q:"SLD папкасында не болуы керек?",opts:["Тек DWG","Тек PDF","DWG + PDF екеуі","Тек XLSX"],ans:2,exp:"DWG (инженерге) + PDF (клиентке) — екеуі міндетті."}
+       ]},
+      {id:"4-5",num:"20",title:"Дипломдық жоба + Сертификат",meta:"60 мін · Финал",
+       script:"Бүгін — курстың СОҢҒЫ сабағы!\n\n4 апта ішінде сіздер үйрендіңіздер:\n✓ Электр негіздері (V, I, P)\n✓ Кабель, автомат, щит\n✓ Электр сызбалары + SLD\n✓ AutoCAD монтаж сызбасы\n✓ DIALux жарықтандыру есебі\n✓ Кәсіби жобалық пакет\n\nСертификатты алу үшін → «Сертификат» бетіне өтіңіз!",
+       hw:"Келесі қадамдар:\n— Нақты жоба жасаңыз\n— LinkedIn-ге сертификатты жүктеңіз\n— Level 2: AutoCAD Advanced + DIALux Advanced",
+       video:"",
+       quiz:[
+         {q:"Uniformity 0.72 — не дегені?",opts:["Тым күшті","Жақсы біркелкілік (≥0.6)","Шам жеткіліксіз","Дұрыс орналаспаған"],ans:1,exp:"Uniformity ≥0.6 = жарықтандыру жақсы біркелкі."},
+         {q:"Курс соңында студент не алады?",opts:["Тек теория","Толық жобалық пакет + сертификат","Тек AutoCAD","Тек кабель"],ans:1,exp:"Толық жобалық пакет + SparkFlow Academy сертификаты!"}
+       ]}
+    ]
+  }
+];
+
+// ─── AUTH ─────────────────────────────────────────────────────────────────────
+async function doLogin(){
+  const login = document.getElementById('loginInput').value.trim();
+  const pass = document.getElementById('passInput').value;
+  const btn = document.getElementById('loginBtn');
+  const errEl = document.getElementById('authError');
+
+  if(!login || !pass){
+    errEl.textContent = 'Логин мен пароль енгізіңіз';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Тексерілуде...';
+  errEl.style.display = 'none';
+
+  try {
+    // Step 1: Get students
+    const students = await fbGet('/students');
+    if(!students){
+      errEl.textContent = 'Студент тіркелмеген';
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Кіру →';
+      return;
+    }
+
+    // Step 2: Find user by login
+    const uid = Object.keys(students).find(k => students[k] && students[k].login === login);
+    if(!uid){
+      errEl.textContent = 'Логин табылмады: ' + login;
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Кіру →';
+      return;
+    }
+
+    const student = students[uid];
+
+    // Step 3: Check password
+    if(student.password !== pass){
+      errEl.textContent = 'Пароль қате';
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Кіру →';
+      return;
+    }
+
+    // Step 4: Load data
+    currentUser = { uid, name: student.name, login: student.login };
+    const courseData = await fbGet('/course');
+    COURSE = courseData ? courseData : DEFAULT_COURSE;
+    const progData = await fbGet('/progress/' + uid);
+    userProgress = progData || {};
+    quizStates = {};
+
+    // Step 5: Show app
+    const authP = document.getElementById('authPage');
+    const appP = document.getElementById('appPage');
+    authP.classList.remove('active');
+    authP.style.display = 'none';
+    appP.classList.add('active');
+    appP.style.display = 'block';
+
+    document.getElementById('tbUsername').textContent = student.name;
+    document.getElementById('tbAvatar').textContent = student.name.substring(0,2).toUpperCase();
+    document.getElementById('loginInput').value = '';
+    document.getElementById('passInput').value = '';
+
+    renderAll();
+
+  } catch(e){
+    errEl.textContent = 'Қате: ' + e.message;
+    errEl.style.display = 'block';
+    console.error('doLogin error:', e);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Кіру →';
+}
+
+function showErr(msg){ const e=document.getElementById('authError'); e.textContent=msg; e.classList.add('show'); }
+function resetBtn(){ const b=document.getElementById('loginBtn'); b.disabled=false; b.textContent='Кіру →'; }
+
+async function loadUserData(uid){
+  const [courseData, progData, slidesData, certData] = await Promise.all([
+    fbGet('/course'), fbGet('/progress/'+uid),
+    fbGet('/slidesConfig'), fbGet('/certConfig')
+  ]);
+  COURSE = courseData ? courseData : DEFAULT_COURSE;
+  userProgress = progData || {};
+  SLIDES_CONFIG = slidesData || {};
+  CERT_CONFIG = certData || {
+    schoolName:'SparkFlow Academy',
+    courseName:'Электр инженериясы — нөлден практикалық дағдыларға дейін',
+    duration:'4 апта · 20 сабақ',
+    teacher:'SparkFlow Academy'
+  };
+  quizStates = {};
+  renderAll();
+}
+
+async function doLogout(){
+  currentUser = null; userProgress = {}; quizStates = {}; COURSE = null;
+  document.getElementById('appPage').classList.remove('active');
+  document.getElementById('authPage').classList.add('active');
+  document.querySelector('.page.active', document.getElementById('appPage')) && document.querySelectorAll('#appPage .page').forEach(p=>{ p.classList.remove('active'); if(p.id==='homePage') p.classList.add('active'); });
+}
+
+async function saveProgress(){
+  if(!currentUser) return;
+  await fbSet('/progress/'+currentUser.uid, userProgress);
+  updateTopProgress();
+}
+
+// ─── APP ──────────────────────────────────────────────────────────────────────
+function renderAll(){
+  renderWeekCards();
+  renderSidebar();
+  updateTopProgress();
+  document.getElementById('certDate').valueAsDate = new Date();
+  refreshCert();
+}
+
+function getTotalDone(){ return Object.values(userProgress).filter(v=>v==='done').length; }
+function getWeekDone(wid){ const w=COURSE.find(x=>x.id===wid); return w?w.lessons.filter(l=>userProgress[l.id]==='done').length:0; }
+
+// Week locked if previous week test not passed (70%)
+function isWeekLocked(wid){
+  if(wid===1) return false;
+  const prevW = COURSE.find(w=>w.id===wid-1);
+  if(!prevW) return false;
+  const testLesson = prevW.lessons[prevW.lessons.length-1];
+  const state = userProgress[testLesson.id + '_quiz'];
+  if(!state) return true;
+  const parsed = typeof state==='string'?JSON.parse(state):state;
+  if(!parsed.submitted) return true;
+  const pct = parsed.score / testLesson.quiz.length;
+  return pct < 0.7;
+}
+
+// All lessons in a week locked until week test (last lesson) passed — except the test itself
+function isLessonLocked(lesson, weekId){
+  if(isWeekLocked(weekId)) return true;
+  return false;
+}
+
+function updateTopProgress(){
+  const done = getTotalDone();
+  const pct = Math.round(done/20*100);
+  document.getElementById('progText').textContent = done + '/20';
+  document.getElementById('progFill').style.width = pct + '%';
+}
+
+function goPage(p){
+  document.querySelectorAll('#appPage .page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tb-btn').forEach(el=>el.classList.remove('active'));
+  if(p==='home'){ document.getElementById('homePage').classList.add('active'); document.getElementById('nav-home').classList.add('active'); renderWeekCards(); }
+  else if(p==='lessons'){ document.getElementById('lessonsPage').classList.add('active'); document.getElementById('nav-lessons').classList.add('active'); renderSidebar(); }
+  else if(p==='cert'){ document.getElementById('certPage').classList.add('active'); document.getElementById('nav-cert').classList.add('active'); renderCertStatus(); }
+}
+
+// ─── WEEK CARDS ──────────────────────────────────────────────────────────────
+function renderWeekCards(){
+  const grid = document.getElementById('weeksGrid');
+  grid.innerHTML = '';
+  COURSE.forEach(w => {
+    const done = getWeekDone(w.id);
+    const locked = isWeekLocked(w.id);
+    const pct = Math.round(done/w.lessons.length*100);
+    const div = document.createElement('div');
+    div.className = 'wcard' + (locked?' locked':'');
+    div.style.setProperty('--wc', w.color);
+    div.innerHTML = `
+      ${locked?'<div class="lock-badge">🔒 Құлыптаулы</div>':''}
+      <div class="wc-num" style="color:${w.color}">${w.id}-АПТА</div>
+      <div class="wc-title">${w.title}</div>
+      <div class="wc-sub">${w.sub} · ${w.lessons.length} сабақ</div>
+      <div class="wc-dots">${w.lessons.map(l=>`<div class="wc-dot${userProgress[l.id]==='done'?' done':''}" style="${userProgress[l.id]==='done'?'background:'+w.color+';border-color:'+w.color:''}"></div>`).join('')}</div>
+      <div class="wc-prog-row"><span>${done}/${w.lessons.length}</span><span>${pct}%</span></div>
+      <div class="wc-bar"><div class="wc-bar-fill" style="width:${pct}%;background:${w.color}"></div></div>
+      <button class="wc-btn" onclick="openWeek(${w.id-1})" ${locked?'disabled':''} style="border-color:${w.color};color:${w.color}">${locked?'🔒 Алдыңғы апта тестін тапсырыңыз':done===0?'Бастау →':done===w.lessons.length?'Аяқталды ✓':'Жалғастыру →'}</button>`;
+    grid.appendChild(div);
+  });
+}
+
+function openWeek(idx){
+  goPage('lessons');
+  const firstL = COURSE[idx].lessons[0];
+  weekOpen[idx] = true;
+  renderSidebar();
+  setTimeout(()=>loadLesson(firstL.id), 50);
+}
+
+// ─── SIDEBAR ─────────────────────────────────────────────────────────────────
+function renderSidebar(){
+  const sb = document.getElementById('sidebar');
+  sb.innerHTML = '';
+  COURSE.forEach((w,wi)=>{
+    const locked = isWeekLocked(w.id);
+    const div = document.createElement('div');
+    div.innerHTML = `
+      <div class="sw-head" onclick="toggleWeekSb(${wi})">
+        <div class="sw-dot" style="background:${w.color}"></div>
+        <div class="sw-title">${w.id}-апта · ${w.title}</div>
+        <div class="sw-arr${weekOpen[wi]?' open':''}" id="swarr-${wi}">▶</div>
+      </div>
+      <div class="sw-lessons${weekOpen[wi]?' open':''}" id="swl-${wi}">
+        ${w.lessons.map((l,li)=>{
+          const isDone = userProgress[l.id]==='done';
+          const isLocked = locked && li > 0;
+          const isTestLesson = li === w.lessons.length-1;
+          return `<div class="sl${currentLesson===l.id?' active':''}${isLocked?' locked-l':''}" id="sl-${l.id}" onclick="${isLocked?'void(0)':'loadLesson(\''+l.id+'\')'}">
+            <div class="sl-check${isDone?' done':''}">${isDone?'✓':''}</div>
+            <div class="sl-text">${l.num}. ${l.title}${isTestLesson?' 📝':''}</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    sb.appendChild(div);
+  });
+}
+
+function toggleWeekSb(idx){
+  weekOpen[idx] = !weekOpen[idx];
+  document.getElementById(`swl-${idx}`).classList.toggle('open', weekOpen[idx]);
+  document.getElementById(`swarr-${idx}`).classList.toggle('open', weekOpen[idx]);
+}
+
+// ─── LESSON ───────────────────────────────────────────────────────────────────
+function loadLesson(lid){
+  currentLesson = lid;
+  let lesson=null, week=null;
+  COURSE.forEach(w=>{ const l=w.lessons.find(x=>x.id===lid); if(l){lesson=l;week=w;} });
+  if(!lesson) return;
+
+  document.querySelectorAll('.sl').forEach(el=>el.classList.remove('active'));
+  const slEl = document.getElementById(`sl-${lid}`);
+  if(slEl) slEl.classList.add('active');
+
+  const allL = COURSE.flatMap(w=>w.lessons);
+  const idx = allL.findIndex(l=>l.id===lid);
+  const prev = allL[idx-1], next = allL[idx+1];
+  const isDone = userProgress[lid]==='done';
+  const isTestLesson = lid === week.lessons[week.lessons.length-1].id;
+  const weekLocked = isWeekLocked(week.id);
+
+  // Quiz state
+  const qKey = lid+'_quiz';
+  if(!quizStates[qKey]){
+    const saved = userProgress[qKey];
+    quizStates[qKey] = saved ? (typeof saved==='string'?JSON.parse(saved):saved)
+      : {selected: new Array(lesson.quiz.length).fill(-1), submitted:false, score:0};
+  }
+  const qs = quizStates[qKey];
+
+  // Video embed
+  let videoHtml = '';
+  const vidUrl = lesson.video || '';
+  if(vidUrl.includes('youtube.com')||vidUrl.includes('youtu.be')){
+    const ytId = vidUrl.includes('youtu.be') ? vidUrl.split('youtu.be/')[1].split('?')[0] : new URL(vidUrl).searchParams.get('v');
+    videoHtml = `<iframe class="viframe" src="https://www.youtube.com/embed/${ytId}" allowfullscreen></iframe>`;
+  } else {
+    videoHtml = `<div class="vplaceholder"><div class="vplay">▶</div><div style="font-size:13px;font-weight:500">YouTube видео қосылмаған</div><div style="font-size:11px">Админ панелінде URL қосыңыз</div></div>`;
+  }
+
+  // Quiz section — only test lesson has quiz; test locked until all non-test lessons done
+  let quizHtml = '';
+  if(isTestLesson){
+    const allPrevDone = week.lessons.slice(0,-1).every(l=>userProgress[l.id]==='done');
+    if(!allPrevDone){
+      quizHtml = `<div class="quiz-locked"><div class="quiz-locked-icon">🔒</div><div class="quiz-locked-msg">Тест алдымен барлық сабақтарды аяқтаңыз</div><div class="quiz-locked-sub">${week.lessons.slice(0,-1).filter(l=>userProgress[l.id]!=='done').length} сабақ қалды</div></div>`;
+    } else {
+      quizHtml = buildQuizHtml(lesson, qs, lid);
+    }
+  } else {
+    quizHtml = buildQuizHtml(lesson, qs, lid);
+  }
+
+  // Next lesson lock
+  let nextBtn = '';
+  if(next){
+    const nextW = COURSE.find(w=>w.lessons.some(l=>l.id===next.id));
+    const nextWLocked = nextW && isWeekLocked(nextW.id);
+    if(nextWLocked){
+      nextBtn = `<button class="lnav-btn lnav-locked" disabled title="Алдыңғы апта тестін тапсырыңыз (70%+)">Тест тапсырыңыз 🔒</button>`;
+    } else {
+      nextBtn = `<button class="lnav-btn" onclick="loadLesson('${next.id}')">${next.num}. ${next.title.substring(0,18)}... →</button>`;
+    }
+  }
+
+  document.getElementById('lessonContent').innerHTML = `
+    <div class="lc-bc">
+      <span onclick="goPage('home')">Басты бет</span>
+      <span style="color:var(--textdim)">›</span>
+      <span style="color:${week.color}">${week.id}-апта</span>
+      <span style="color:var(--textdim)">›</span>
+      <span style="color:var(--textmid)">${lesson.title}</span>
+    </div>
+    <div class="lc-wbadge" style="background:${week.color}18;color:${week.color}">${week.id}-АПТА · ${week.title}</div>
+    <h1 class="lc-title">${lesson.num}. ${lesson.title}</h1>
+    <div class="lc-meta">${lesson.meta}${isDone?' · <span style="color:var(--green)">✓ Аяқталды</span>':''}</div>
+
+    <div class="vsec">
+      <div class="vsec-lbl">ВИДЕО САБАҚ</div>
+      <div class="vwrap">${videoHtml}</div>
+    </div>
+
+    <div class="ssec">
+      <div class="vsec-lbl" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span>СЛАЙДТАР / ПРЕЗЕНТАЦИЯ</span>
+        ${SLIDES_CONFIG[lid] ? \`<div style="display:flex;gap:6px">
+          <button onclick="openFullscreen('${lid}')" style="font-size:12px;padding:4px 10px;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.3);color:#00E5FF;border-radius:6px;cursor:pointer">⛶ Толық экран</button>
+          <a href="${SLIDES_CONFIG[lid].replace('/preview','')}" target="_blank" style="font-size:12px;padding:4px 10px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#22C55E;border-radius:6px;cursor:pointer;text-decoration:none">⬇ Жүктеу</a>
+        </div>\` : ''}
+      </div>
+      ${SLIDES_CONFIG[lid] ?
+        \`<div style="position:relative;border-radius:10px;overflow:hidden;background:#0F2040">
+          <iframe src="${SLIDES_CONFIG[lid]}" style="width:100%;height:460px;border:none" allowfullscreen></iframe>
+          <div id="drawLayer-${lid}" style="position:absolute;top:0;left:0;width:100%;height:460px;pointer-events:none;z-index:5">
+            <canvas id="drawCanvas-${lid}" width="900" height="460" style="width:100%;height:100%;display:none"></canvas>
+          </div>
+          <div style="position:absolute;top:8px;right:8px;display:flex;gap:6px;z-index:10">
+            <button onclick="toggleDraw('${lid}')" id="drawToggle-${lid}" style="padding:5px 10px;border-radius:6px;border:1px solid rgba(0,229,255,.3);background:rgba(0,229,255,.1);color:#00E5FF;cursor:pointer;font-size:12px">✏ Сызу</button>
+            <button onclick="addTextNote('${lid}')" style="padding:5px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#94A3B8;cursor:pointer;font-size:12px">T Мәтін</button>
+            <button onclick="clearDraw('${lid}')" style="padding:5px 10px;border-radius:6px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.1);color:#FCA5A5;cursor:pointer;font-size:12px">✕ Тазалау</button>
+          </div>
+        </div>\` :
+        \`<div class="sviewer" style="padding:28px;text-align:center">
+          <div style="font-size:28px;margin-bottom:8px">📄</div>
+          <div style="font-size:13px;color:#94A3B8">Слайд қосылмаған</div>
+          <div style="font-size:12px;color:#475569;margin-top:4px">Админ панелінен Google Drive PDF сілтемесін қосыңыз</div>
+        </div>\`}
+    </div>
+
+    <div class="card-collapsible">
+      <div class="cc-head" onclick="toggleCC('script-${lid}',this)">
+        <div class="cc-title"><div class="cc-ico">📝</div>Мұғалім сценарийі</div>
+        <div class="cc-arr">▼</div>
+      </div>
+      <div class="cc-body" id="script-${lid}">
+        <div class="script-txt">${lesson.script.replace(/\n/g,'<br>')}</div>
+        <div class="hw-box">
+          <div class="hw-lbl">ҮЙ ТАПСЫРМАСЫ</div>
+          <div class="hw-txt">${lesson.hw.replace(/\n/g,'<br>')}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-collapsible">
+      <div class="cc-head" onclick="toggleCC('quiz-${lid}',this)">
+        <div class="cc-title"><div class="cc-ico">⚡</div>Тест · ${lesson.quiz.length} сұрақ ${isTestLesson?'· Апта тесті':''}</div>
+        <div class="cc-arr">▼</div>
+      </div>
+      <div class="cc-body" id="quiz-${lid}">
+        ${quizHtml}
+      </div>
+    </div>
+
+    <div class="lnav">
+      ${prev ? `<button class="lnav-btn" onclick="loadLesson('${prev.id}')">← ${prev.num}. ${prev.title.substring(0,16)}...</button>` : '<div></div>'}
+      <button class="lnav-btn${isDone?' lnav-done':''}" onclick="markDone('${lid}')">${isDone?'✓ Аяқталды':'Аяқталды деп белгіле'}</button>
+      ${nextBtn || '<div></div>'}
+    </div>`;
+}
+
+function buildQuizHtml(lesson, qs, lid){
+  const qHtml = lesson.quiz.map((q,qi)=>`
+    <div class="qq">
+      <div class="qq-num">СҰРАҚ ${qi+1} / ${lesson.quiz.length}</div>
+      <div class="qq-text">${q.q}</div>
+      <div class="qq-opts">
+        ${q.opts.map((o,oi)=>`
+          <button class="qopt${qs.submitted?(oi===q.ans?' correct':(oi===qs.selected[qi]&&oi!==q.ans?' wrong':'')):(qs.selected[qi]===oi?' selected-pre':'')}"
+            onclick="selOpt('${lid}',${qi},${oi})" ${qs.submitted?'disabled':''}>
+            <span class="qletter">${String.fromCharCode(65+oi)}</span>${o}
+          </button>`).join('')}
+      </div>
+      <div class="qexp${qs.submitted?' show':''}${qs.submitted?(qs.selected[qi]===q.ans?' ok':' no'):''}">${q.exp}</div>
+    </div>`).join('');
+
+  const actHtml = qs.submitted
+    ? `<div class="qscore-wrap">
+        <div class="qscore-num" style="color:${qs.score/lesson.quiz.length>=.7?'var(--green)':'var(--red)'}">${qs.score}/${lesson.quiz.length}</div>
+        <div class="qscore-lbl">${Math.round(qs.score/lesson.quiz.length*100)}%</div>
+        <div class="qscore-pass" style="color:${qs.score/lesson.quiz.length>=.7?'var(--green)':'var(--red)'}">${qs.score/lesson.quiz.length>=.7?'✓ Тест өтілді — келесі апта ашылды!':'✗ 70% алу керек — қайталаңыз'}</div>
+      </div>`
+    : `<button class="qsubmit" id="qsub-${lid}" onclick="submitQuiz('${lid}')" disabled>Тексеру</button>`;
+
+  return qHtml + `<div class="quiz-actions">${actHtml}<button class="qreset" onclick="resetQuiz('${lid}')">Қайталау</button></div>`;
+}
+
+function toggleCC(id, headEl){
+  const body = document.getElementById(id);
+  const arr = headEl.querySelector('.cc-arr');
+  body.classList.toggle('open');
+  arr.classList.toggle('open');
+  headEl.classList.toggle('open');
+}
+
+function selOpt(lid, qi, oi){
+  const key = lid+'_quiz';
+  if(quizStates[key].submitted) return;
+  quizStates[key].selected[qi] = oi;
+  const allA = quizStates[key].selected.every(s=>s>=0);
+  const btn = document.getElementById(`qsub-${lid}`);
+  if(btn) btn.disabled = !allA;
+  // Visual update
+  document.querySelectorAll('.qq').forEach((qDiv,i)=>{
+    if(i===qi){
+      qDiv.querySelectorAll('.qopt').forEach((opt,j)=>{
+        opt.classList.remove('selected-pre');
+        if(j===oi) opt.classList.add('selected-pre');
+      });
+    }
+  });
+}
+
+async function submitQuiz(lid){
+  let lesson=null; COURSE.forEach(w=>{ const l=w.lessons.find(x=>x.id===lid); if(l) lesson=l; });
+  const key = lid+'_quiz';
+  const qs = quizStates[key];
+  let score=0;
+  lesson.quiz.forEach((q,i)=>{ if(qs.selected[i]===q.ans) score++; });
+  qs.score=score; qs.submitted=true;
+  // Save to DB
+  userProgress[key] = JSON.stringify(qs);
+  await saveProgress();
+  if(score/lesson.quiz.length >= 0.7) renderWeekCards();
+  loadLesson(lid);
+  setTimeout(()=>{ const b=document.getElementById(`quiz-${lid}`); if(b){b.classList.add('open'); b.previousElementSibling.classList.add('open'); b.previousElementSibling.querySelector('.cc-arr').classList.add('open');} },100);
+}
+
+function resetQuiz(lid){
+  let lesson=null; COURSE.forEach(w=>{ const l=w.lessons.find(x=>x.id===lid); if(l) lesson=l; });
+  quizStates[lid+'_quiz'] = {selected:new Array(lesson.quiz.length).fill(-1), submitted:false, score:0};
+  loadLesson(lid);
+  setTimeout(()=>{ const b=document.getElementById(`quiz-${lid}`); if(b){b.classList.add('open');} },100);
+}
+
+async function markDone(lid){
+  userProgress[lid]='done';
+  await saveProgress();
+  renderSidebar(); renderWeekCards();
+  loadLesson(lid);
+  const done=getTotalDone();
+  if(done>=20) setTimeout(()=>{ if(confirm('Барлық 20 сабақты аяқтадыңыз! Сертификат алғыңыз келе ме?')) goPage('cert'); },300);
+}
+
+function loadPdf(input,lid){
+  const file=input.files[0]; if(!file) return;
+  const url=URL.createObjectURL(file);
+  document.getElementById(`scont-${lid}`).innerHTML=`<embed src="${url}" type="application/pdf" width="100%" height="480px" style="border:none">`;
+}
+
+// ─── CERTIFICATE ──────────────────────────────────────────────────────────────
+function renderCertStatus(){
+  const done = getTotalDone();
+  const allPassed = checkAllTestsPassed();
+  const el = document.getElementById('certStatus');
+  const btn = document.getElementById('certDlBtn');
+  const previewBtn = document.getElementById('certPreviewBtn');
+
+  if(done >= 20 && allPassed){
+    el.innerHTML=`<div class="cert-check" style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);border-radius:12px;padding:14px;text-align:center;margin-bottom:18px">
+      <div style="font-size:20px;margin-bottom:6px">🎉</div>
+      <div style="font-size:15px;font-weight:600;color:#22C55E;margin-bottom:4px">Барлық сабақ аяқталды!</div>
+      <div style="font-size:12px;color:#475569">Сертификатты жүктеуге болады</div>
+    </div>`;
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    if(previewBtn) previewBtn.style.display = 'none';
+  } else {
+    const remaining = 20 - done;
+    el.innerHTML=`<div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:12px;padding:14px;text-align:center;margin-bottom:18px">
+      <div style="font-size:20px;margin-bottom:6px">🔒</div>
+      <div style="font-size:15px;font-weight:600;color:#F59E0B;margin-bottom:4px">Сертификат алу үшін</div>
+      <div style="font-size:12px;color:#475569">${remaining > 0 ? remaining+' сабақ қалды' : 'Барлық тесттерден 70%+ алыңыз'}</div>
+    </div>`;
+    btn.disabled = true;
+    btn.style.opacity = '0.4';
+    if(previewBtn) previewBtn.style.display = 'block';
+  }
+  if(currentUser) document.getElementById('certName').value = currentUser.name || '';
+  refreshCert();
+}
+
+function checkAllTestsPassed(){
+  if(!COURSE || !COURSE.length) return false;
+  return COURSE.every(w => {
+    const testLesson = w.lessons[w.lessons.length - 1];
+    const key = testLesson.id + '_quiz';
+    const state = userProgress[key];
+    if(!state) return false;
+    const parsed = typeof state === 'string' ? JSON.parse(state) : state;
+    if(!parsed.submitted) return false;
+    return parsed.score / testLesson.quiz.length >= 0.7;
+  });
+}
+
+function refreshCert(){
+  const name = document.getElementById('certName').value || 'Аты-жөніңіз';
+  const date = document.getElementById('certDate').value;
+  const c = CERT_CONFIG || {};
+  if(document.getElementById('cdocName')) document.getElementById('cdocName').textContent = name;
+  if(document.getElementById('cdocDate')) document.getElementById('cdocDate').textContent = date ? new Date(date).toLocaleDateString('kk-KZ',{year:'numeric',month:'long',day:'numeric'}) : '—';
+  if(document.getElementById('cdocAcad')) document.getElementById('cdocAcad').textContent = (c.schoolName || 'SPARKFLOW ACADEMY').toUpperCase();
+  if(document.getElementById('cdocCourse')) document.getElementById('cdocCourse').textContent = c.courseName || 'Электр инженериясы — нөлден практикалық дағдыларға дейін';
+  if(document.getElementById('cdocDur')) document.getElementById('cdocDur').textContent = c.duration || '4 апта · 20 сабақ';
+  if(document.getElementById('cdocSchool')) document.getElementById('cdocSchool').textContent = c.schoolName || 'SparkFlow Academy';
+  if(document.getElementById('cdocTeacher')) document.getElementById('cdocTeacher').textContent = c.teacher || 'Мұғалім';
+  if(document.getElementById('cdocId')) document.getElementById('cdocId').textContent = 'ID: SFA-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random()*9000)+1000);
+}
+
+function downloadCert(){
+  const done = getTotalDone();
+  const allPassed = checkAllTestsPassed();
+  if(done < 20 || !allPassed){
+    alert('Сертификат алу үшін барлық 20 сабақты аяқтап, тесттерден 70%+ алу керек!');
+    return;
+  }
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+  const W=297, H=210;
+  const c = CERT_CONFIG || {};
+
+  // Background
+  doc.setFillColor(6,13,26); doc.rect(0,0,W,H,'F');
+
+  // Grid
+  doc.setDrawColor(0,229,255); doc.setLineWidth(0.08);
+  for(let x=0;x<W;x+=22){ doc.line(x,0,x,H); }
+  for(let y=0;y<H;y+=22){ doc.line(0,y,W,y); }
+
+  // Border
+  doc.setDrawColor(0,188,212); doc.setLineWidth(1);
+  doc.rect(8,8,W-16,H-16);
+  doc.setDrawColor(0,229,255); doc.setLineWidth(0.3);
+  doc.rect(10,10,W-20,H-20);
+
+  // Corner decorations
+  doc.setDrawColor(0,188,212); doc.setLineWidth(2);
+  [[16,16],[W-16,16],[16,H-16],[W-16,H-16]].forEach(([cx,cy],i)=>{
+    const s=16;
+    if(i===0){doc.line(cx,cy,cx+s,cy);doc.line(cx,cy,cx,cy+s);}
+    if(i===1){doc.line(cx-s,cy,cx,cy);doc.line(cx,cy,cx,cy+s);}
+    if(i===2){doc.line(cx,cy-s,cx,cy);doc.line(cx,cy,cx+s,cy);}
+    if(i===3){doc.line(cx-s,cy,cx,cy);doc.line(cx,cy-s,cx,cy);}
+  });
+
+  // Logo bolt
+  doc.setFillColor(0,229,255); doc.roundedRect(W/2-10,14,20,20,3,3,'F');
+  doc.setTextColor(6,13,26); doc.setFontSize(13); doc.setFont('helvetica','bold');
+  doc.text('SF',W/2,27,{align:'center'});
+
+  // Academy name
+  doc.setTextColor(0,229,255); doc.setFontSize(10); doc.setFont('helvetica','bold');
+  doc.text((c.schoolName||'SPARKFLOW ACADEMY').toUpperCase(), W/2, 42, {align:'center'});
+
+  // Decorative line
+  doc.setDrawColor(0,188,212); doc.setLineWidth(0.5);
+  doc.line(W/2-40,45,W/2+40,45);
+
+  // Certificate title
+  doc.setTextColor(120,140,160); doc.setFontSize(8); doc.setFont('helvetica','normal');
+  doc.text('АЯҚТАУ СЕРТИФИКАТЫ', W/2, 52, {align:'center'});
+
+  // Presents
+  doc.setTextColor(148,163,184); doc.setFontSize(12);
+  doc.text('Осы сертификат берілді', W/2, 62, {align:'center'});
+
+  // Name
+  const nm = document.getElementById('certName').value || 'Аты-жөніңіз';
+  doc.setTextColor(255,255,255); doc.setFontSize(26); doc.setFont('helvetica','bold');
+  doc.text(nm, W/2, 78, {align:'center'});
+
+  // Name underline
+  doc.setDrawColor(0,188,212); doc.setLineWidth(0.8);
+  doc.line(W/2-65,82,W/2+65,82);
+
+  // Course label
+  doc.setTextColor(128,222,234); doc.setFontSize(7.5); doc.setFont('helvetica','bold');
+  doc.text('КУРС', W/2, 90, {align:'center'});
+
+  // Course name
+  doc.setTextColor(226,232,240); doc.setFontSize(11); doc.setFont('helvetica','normal');
+  const courseName = c.courseName || 'Электр инженериясы — нөлден практикалық дағдыларға дейін';
+  doc.text(courseName, W/2, 98, {align:'center', maxWidth:200});
+
+  // Details row
+  const dateText = document.getElementById('cdocDate')?.textContent || '—';
+  const durText = c.duration || '4 апта · 20 сабақ';
+  const details = [[durText,'ҰЗАҚТЫҒЫ'],[dateText,'КҮН']];
+  details.forEach(([v,l],i) => {
+    const x = W/2 + (i===0?-50:50);
+    doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(10);
+    doc.text(v, x, 113, {align:'center'});
+    doc.setTextColor(100,120,140); doc.setFont('helvetica','normal'); doc.setFontSize(7);
+    doc.text(l, x, 119, {align:'center'});
+  });
+
+  // Horizontal separator
+  doc.setDrawColor(30,58,95); doc.setLineWidth(0.4);
+  doc.line(20,128,W-20,128);
+
+  // Signatures
+  const school = c.schoolName || 'SparkFlow Academy';
+  const teacher = c.teacher || 'Мұғалім';
+  doc.setDrawColor(50,80,110); doc.setLineWidth(0.4);
+  doc.line(28,140,108,140);
+  doc.line(W-108,140,W-28,140);
+  doc.setTextColor(100,120,140); doc.setFontSize(8.5); doc.setFont('helvetica','normal');
+  doc.text(school, 68, 145, {align:'center'});
+  doc.text(teacher, W-68, 145, {align:'center'});
+
+  // Certificate ID
+  const cid = 'SFA-'+new Date().getFullYear()+'-'+String(Math.floor(Math.random()*9000)+1000);
+  doc.setTextColor(60,80,100); doc.setFontSize(6.5); doc.setFont('courier','normal');
+  doc.text('ID: '+cid, W/2, 153, {align:'center'});
+
+  // Bottom decoration
+  doc.setDrawColor(0,188,212); doc.setLineWidth(1);
+  doc.line(W/2-30,158,W/2+30,158);
+
+  doc.save('SparkFlow_Sertifikat_'+nm.replace(/\s/g,'_')+'.pdf');
+}
+
+// ── SLIDE DRAWING TOOLS ────────────────────────────────────────────────────────
+let drawActive = {};
+let drawCtx = {};
+let isDrawing = {};
+let lastX = {}, lastY = {};
+
+function toggleDraw(lid) {
+  const canvas = document.getElementById('drawCanvas-' + lid);
+  const layer = document.getElementById('drawLayer-' + lid);
+  const btn = document.getElementById('drawToggle-' + lid);
+  if (!canvas) return;
+  drawActive[lid] = !drawActive[lid];
+  if (drawActive[lid]) {
+    canvas.style.display = 'block';
+    layer.style.pointerEvents = 'auto';
+    btn.style.background = 'rgba(0,229,255,.3)';
+    btn.style.color = '#fff';
+    if (!drawCtx[lid]) initCanvas(lid);
+  } else {
+    layer.style.pointerEvents = 'none';
+    btn.style.background = 'rgba(0,229,255,.1)';
+    btn.style.color = '#00E5FF';
+  }
+}
+
+function initCanvas(lid) {
+  const canvas = document.getElementById('drawCanvas-' + lid);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  drawCtx[lid] = ctx;
+  ctx.strokeStyle = '#00E5FF';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  isDrawing[lid] = false;
+
+  canvas.addEventListener('mousedown', e => {
+    if (!drawActive[lid]) return;
+    isDrawing[lid] = true;
+    const rect = canvas.getBoundingClientRect();
+    lastX[lid] = (e.clientX - rect.left) * (canvas.width / rect.width);
+    lastY[lid] = (e.clientY - rect.top) * (canvas.height / rect.height);
+  });
+  canvas.addEventListener('mousemove', e => {
+    if (!isDrawing[lid] || !drawActive[lid]) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+    const ctx = drawCtx[lid];
+    ctx.beginPath();
+    ctx.moveTo(lastX[lid], lastY[lid]);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    lastX[lid] = x; lastY[lid] = y;
+  });
+  canvas.addEventListener('mouseup', () => { isDrawing[lid] = false; });
+  canvas.addEventListener('mouseleave', () => { isDrawing[lid] = false; });
+
+  // Touch support
+  canvas.addEventListener('touchstart', e => {
+    if (!drawActive[lid]) return;
+    e.preventDefault();
+    isDrawing[lid] = true;
+    const rect = canvas.getBoundingClientRect();
+    const t = e.touches[0];
+    lastX[lid] = (t.clientX - rect.left) * (canvas.width / rect.width);
+    lastY[lid] = (t.clientY - rect.top) * (canvas.height / rect.height);
+  });
+  canvas.addEventListener('touchmove', e => {
+    if (!isDrawing[lid] || !drawActive[lid]) return;
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const t = e.touches[0];
+    const x = (t.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (t.clientY - rect.top) * (canvas.height / rect.height);
+    const ctx = drawCtx[lid];
+    ctx.beginPath();
+    ctx.moveTo(lastX[lid], lastY[lid]);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    lastX[lid] = x; lastY[lid] = y;
+  });
+  canvas.addEventListener('touchend', () => { isDrawing[lid] = false; });
+}
+
+function clearDraw(lid) {
+  const canvas = document.getElementById('drawCanvas-' + lid);
+  if (canvas && drawCtx[lid]) {
+    drawCtx[lid].clearRect(0, 0, canvas.width, canvas.height);
+  }
+}
+
+function addTextNote(lid) {
+  const text = prompt('Мәтін енгізіңіз:');
+  if (!text) return;
+  const canvas = document.getElementById('drawCanvas-' + lid);
+  if (!canvas) return;
+  canvas.style.display = 'block';
+  if (!drawCtx[lid]) initCanvas(lid);
+  const ctx = drawCtx[lid];
+  ctx.font = 'bold 18px Space Grotesk, system-ui, sans-serif';
+  ctx.fillStyle = '#FFD700';
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 1;
+  ctx.strokeText(text, 20, 40);
+  ctx.fillText(text, 20, 40);
+}
+
+function openFullscreen(lid) {
+  const slideUrl = SLIDES_CONFIG[lid];
+  if (!slideUrl) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'fsOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#060D1A;display:flex;flex-direction:column';
+
+  overlay.innerHTML = \`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#0A1628;border-bottom:1px solid #1E3A5F;flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="color:#00E5FF;font-weight:700;font-size:15px">⚡ SparkFlow</span>
+        <span style="color:#94A3B8;font-size:13px">Слайд қарау</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="toggleFsDraw()" id="fsDrawBtn" style="padding:6px 14px;border-radius:7px;border:1px solid rgba(0,229,255,.3);background:rgba(0,229,255,.1);color:#00E5FF;cursor:pointer;font-size:13px">✏ Сызу</button>
+        <button onclick="clearFsDraw()" style="padding:6px 14px;border-radius:7px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.1);color:#FCA5A5;cursor:pointer;font-size:13px">✕ Тазалау</button>
+        <button onclick="addFsText()" style="padding:6px 14px;border-radius:7px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#94A3B8;cursor:pointer;font-size:13px">T Мәтін</button>
+        <button onclick="closeFsOverlay()" style="padding:6px 14px;border-radius:7px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.15);color:#FCA5A5;cursor:pointer;font-size:13px;font-weight:600">✕ Жабу</button>
+      </div>
+    </div>
+    <div style="flex:1;position:relative;overflow:hidden">
+      <iframe id="fsFrame" src="${slideUrl}" style="width:100%;height:100%;border:none" allowfullscreen></iframe>
+      <canvas id="fsCanvas" width="1920" height="1080" style="position:absolute;top:0;left:0;width:100%;height:100%;display:none;pointer-events:none"></canvas>
+    </div>
+    <div style="padding:8px 16px;background:#0A1628;border-top:1px solid #1E3A5F;text-align:center">
+      <span style="font-size:11px;color:#475569">ESC немесе «Жабу» батырмасы арқылы шығыңыз</span>
+    </div>
+  \`;
+
+  document.body.appendChild(overlay);
+
+  // ESC to close
+  const escHandler = e => { if (e.key === 'Escape') { closeFsOverlay(); document.removeEventListener('keydown', escHandler); } };
+  document.addEventListener('keydown', escHandler);
+
+  // Init fullscreen canvas
+  let fsDrawing = false, fsActive = false, fsCtx = null;
+  let fsLastX = 0, fsLastY = 0;
+
+  window.toggleFsDraw = function() {
+    fsActive = !fsActive;
+    const canvas = document.getElementById('fsCanvas');
+    const btn = document.getElementById('fsDrawBtn');
+    if (fsActive) {
+      canvas.style.display = 'block';
+      canvas.style.pointerEvents = 'auto';
+      btn.style.background = 'rgba(0,229,255,.3)';
+      btn.style.color = '#fff';
+      if (!fsCtx) {
+        fsCtx = canvas.getContext('2d');
+        fsCtx.strokeStyle = '#00E5FF';
+        fsCtx.lineWidth = 3;
+        fsCtx.lineCap = 'round';
+
+        canvas.addEventListener('mousedown', e => {
+          if (!fsActive) return;
+          fsDrawing = true;
+          const rect = canvas.getBoundingClientRect();
+          fsLastX = (e.clientX - rect.left) * (canvas.width / rect.width);
+          fsLastY = (e.clientY - rect.top) * (canvas.height / rect.height);
+        });
+        canvas.addEventListener('mousemove', e => {
+          if (!fsDrawing || !fsActive) return;
+          const rect = canvas.getBoundingClientRect();
+          const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+          const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+          fsCtx.beginPath();
+          fsCtx.moveTo(fsLastX, fsLastY);
+          fsCtx.lineTo(x, y);
+          fsCtx.stroke();
+          fsLastX = x; fsLastY = y;
+        });
+        canvas.addEventListener('mouseup', () => { fsDrawing = false; });
+        canvas.addEventListener('mouseleave', () => { fsDrawing = false; });
+      }
+    } else {
+      canvas.style.pointerEvents = 'none';
+      btn.style.background = 'rgba(0,229,255,.1)';
+      btn.style.color = '#00E5FF';
+    }
+  };
+
+  window.clearFsDraw = function() {
+    const canvas = document.getElementById('fsCanvas');
+    if (canvas && fsCtx) fsCtx.clearRect(0, 0, canvas.width, canvas.height);
+  };
+
+  window.addFsText = function() {
+    const text = prompt('Мәтін енгізіңіз:');
+    if (!text) return;
+    const canvas = document.getElementById('fsCanvas');
+    canvas.style.display = 'block';
+    if (!fsCtx) { fsCtx = canvas.getContext('2d'); }
+    fsCtx.font = 'bold 24px Space Grotesk, system-ui, sans-serif';
+    fsCtx.fillStyle = '#FFD700';
+    fsCtx.strokeStyle = '#000';
+    fsCtx.lineWidth = 1;
+    fsCtx.strokeText(text, 30, 60);
+    fsCtx.fillText(text, 30, 60);
+  };
+}
+
+function closeFsOverlay() {
+  const el = document.getElementById('fsOverlay');
+  if (el) el.remove();
+}
+
+</script>
+</body>
+</html>
